@@ -1,11 +1,15 @@
+from typing import TYPE_CHECKING
 import enum
 import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, String, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.restaurant import Restaurant
 
 
 class AuthProvider(str, enum.Enum):
@@ -62,3 +66,8 @@ class User(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+    restaurant: Mapped["Restaurant | None"] = relationship(
+        "Restaurant", back_populates="owner", uselist=False
+    )
+
