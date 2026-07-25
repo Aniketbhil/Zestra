@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,8 +6,12 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Zestra Backend"
     ENV: str = "development"
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/zestra"
-    REDIS_URL: str = "redis://localhost:6379/0"
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/zestra"
+    )
+    REDIS_URL: str = (
+        "rediss://default:your_upstash_password@your-endpoint.upstash.io:6379"
+    )
 
     JWT_SECRET: str = "change_this_to_a_secure_secret_key"
     JWT_ALGORITHM: str = "HS256"
@@ -19,6 +24,26 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore",
     )
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: str) -> str:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            if v.startswith("postgresql://"):
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
+    @field_validator("REDIS_URL", mode="before")
+    @classmethod
+    def assemble_redis_connection(cls, v: str) -> str:
+        if isinstance(v, str):
+            if v.startswith("https://"):
+                return v.replace("https://", "rediss://", 1)
+            if v.startswith("http://"):
+                return v.replace("http://", "redis://", 1)
+        return v
 
 
 settings = Settings()
