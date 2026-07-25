@@ -27,3 +27,9 @@ class RestaurantResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RestaurantQRCodeResponse(BaseModel):
+    qr_code_base64: str
+    menu_url: str
+

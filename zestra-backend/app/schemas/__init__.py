@@ -3,7 +3,14 @@ from app.schemas.auth import (
     TokenResponse,
     UserRegisterRequest,
 )
-from app.schemas.menu_item import MenuItemCreate, MenuItemResponse, MenuItemUpdate
+from app.schemas.menu_item import (
+    MenuItemCreate,
+    MenuItemResponse,
+    MenuItemUpdate,
+    PublicMenuCategoryResponse,
+    PublicMenuItemResponse,
+    PublicMenuResponse,
+)
 from app.schemas.restaurant import RestaurantCreate, RestaurantResponse
 from app.schemas.user import UserCreate
 
@@ -17,4 +24,8 @@ __all__ = [
     "MenuItemCreate",
     "MenuItemUpdate",
     "MenuItemResponse",
+    "PublicMenuItemResponse",
+    "PublicMenuCategoryResponse",
+    "PublicMenuResponse",
 ]
+

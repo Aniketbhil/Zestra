@@ -51,3 +51,25 @@ class MenuItemResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PublicMenuItemResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str | None = None
+    price: Decimal
+    image_url: str | None = None
+    is_available: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicMenuCategoryResponse(BaseModel):
+    category: str
+    items: list[PublicMenuItemResponse]
+
+
+class PublicMenuResponse(BaseModel):
+    name: str
+    categories: list[PublicMenuCategoryResponse]
+
