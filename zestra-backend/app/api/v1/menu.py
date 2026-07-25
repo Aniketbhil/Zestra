@@ -10,8 +10,10 @@ from app.models.menu_item import MenuItem
 from app.models.restaurant import Restaurant
 from app.models.user import User, UserRole
 from app.schemas.menu_item import MenuItemCreate, MenuItemResponse, MenuItemUpdate
+from app.services.connection_manager import manager
 
 router = APIRouter(prefix="/menu", tags=["Menu"])
+
 
 
 async def get_user_restaurant(db: AsyncSession, user_id: UUID) -> Restaurant:
@@ -108,6 +110,11 @@ async def update_menu_item(
         )
 
     update_data = payload.model_dump(exclude_unset=True)
+    is_available_changed = (
+        "is_available" in update_data
+        and update_data["is_available"] != item.is_available
+    )
+
     for field, value in update_data.items():
         setattr(item, field, value)
 
@@ -115,7 +122,18 @@ async def update_menu_item(
     await db.commit()
     await db.refresh(item)
 
+    if is_available_changed:
+        await manager.broadcast(
+            restaurant.slug,
+            {
+                "type": "availability_update",
+                "item_id": str(item.id),
+                "is_available": item.is_available,
+            },
+        )
+
     return item
+
 
 
 @router.delete(
