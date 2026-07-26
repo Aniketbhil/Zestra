@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.inventory_item import InventoryItem
     from app.models.menu_item import MenuItem
     from app.models.order import Order
     from app.models.user import User
@@ -58,3 +59,7 @@ class Restaurant(Base):
     orders: Mapped[list["Order"]] = relationship(
         "Order", back_populates="restaurant", cascade="all, delete-orphan"
     )
+    inventory_items: Mapped[list["InventoryItem"]] = relationship(
+        "InventoryItem", back_populates="restaurant", cascade="all, delete-orphan"
+    )
+

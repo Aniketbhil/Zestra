@@ -20,6 +20,37 @@ VALID_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
 }
 
 
+@router.get(
+    "/{order_id}",
+    response_model=OrderResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_order(
+    order_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Fetch order details by order_id (public endpoint, no auth required).
+
+    Returns the order's status, items, and total.
+    Returns 404 if the order_id does not exist.
+    """
+    stmt = (
+        select(Order)
+        .where(Order.id == order_id)
+        .options(selectinload(Order.items))
+    )
+    res = await db.execute(stmt)
+    order = res.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found.",
+        )
+
+    return order
+
+
 @router.patch(
     "/{order_id}/status",
     response_model=OrderResponse,

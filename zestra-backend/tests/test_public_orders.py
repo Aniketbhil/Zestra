@@ -242,3 +242,83 @@ async def test_create_order_unavailable_or_invalid_item():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_get_order_by_id_success():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="owner_get_order@restaurant.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+        )
+        session.add(owner)
+        await session.commit()
+
+        restaurant = Restaurant(
+            owner_id=owner.id,
+            name="Burger Hub",
+            slug="burger-hub",
+        )
+        session.add(restaurant)
+        await session.commit()
+
+        item = MenuItem(
+            restaurant_id=restaurant.id,
+            name="Cheeseburger",
+            price=Decimal("10.00"),
+            category="Burgers",
+            is_available=True,
+        )
+        session.add(item)
+        await session.commit()
+        item_id = item.id
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        payload = {
+            "items": [
+                {"menu_item_id": str(item_id), "quantity": 2},
+            ]
+        }
+        create_res = await client.post(
+            "/api/v1/public/orders/burger-hub", json=payload
+        )
+        assert create_res.status_code == 201
+        order_id = create_res.json()["id"]
+
+        # GET /api/v1/orders/{order_id} with no auth headers
+        get_res = await client.get(f"/api/v1/orders/{order_id}")
+        assert get_res.status_code == 200
+        data = get_res.json()
+        assert data["id"] == order_id
+        assert data["status"] == "received"
+        assert float(data["total"]) == 20.00
+        assert len(data["items"]) == 1
+        assert data["items"][0]["menu_item_id"] == str(item_id)
+        assert data["items"][0]["quantity"] == 2
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_get_order_by_id_not_found():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    random_id = uuid.uuid4()
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        res = await client.get(f"/api/v1/orders/{random_id}")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Order not found."
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

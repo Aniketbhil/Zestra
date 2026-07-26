@@ -13,10 +13,13 @@ from app.core.deps import get_optional_current_user
 from app.core.redis import get_arq_pool
 
 from app.db.session import get_db
+from app.models.inventory_item import InventoryItem
 from app.models.menu_item import MenuItem
+from app.models.menu_item_ingredient import MenuItemIngredient
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.restaurant import Restaurant
 from app.models.user import User
+
 from app.schemas.menu_item import (
     PublicMenuCategoryResponse,
     PublicMenuItemResponse,
@@ -178,7 +181,41 @@ async def create_public_order(
         )
         db.add(order_item)
 
+    # 7. Deduct inventory quantities based on menu item ingredients mappings
+    stmt_ingredients = select(MenuItemIngredient).where(
+        MenuItemIngredient.menu_item_id.in_(menu_item_ids)
+    )
+    res_ingredients = await db.execute(stmt_ingredients)
+    ingredients_list = res_ingredients.scalars().all()
+
+    if ingredients_list:
+        ingredients_by_menu_item = {}
+        for ing in ingredients_list:
+            key = str(ing.menu_item_id)
+            if key not in ingredients_by_menu_item:
+                ingredients_by_menu_item[key] = []
+            ingredients_by_menu_item[key].append(ing)
+
+        inv_ids_needed = list({ing.inventory_item_id for ing in ingredients_list})
+        stmt_inv = select(InventoryItem).where(InventoryItem.id.in_(inv_ids_needed))
+        res_inv = await db.execute(stmt_inv)
+        inv_map = {inv.id: inv for inv in res_inv.scalars().all()}
+
+        for item_req in items_input:
+            menu_ingredients = ingredients_by_menu_item.get(
+                str(item_req.menu_item_id), []
+            )
+            for ing in menu_ingredients:
+                inv_item = inv_map.get(ing.inventory_item_id)
+                if inv_item:
+                    deduction = Decimal(str(ing.quantity_used)) * Decimal(
+                        str(item_req.quantity)
+                    )
+                    inv_item.quantity -= deduction
+                    db.add(inv_item)
+
     await db.commit()
+
 
     # Load order items for response
     stmt_order = (

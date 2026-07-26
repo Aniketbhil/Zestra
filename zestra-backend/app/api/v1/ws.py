@@ -120,3 +120,35 @@ async def websocket_order_track_endpoint(
         pass
     finally:
         manager.disconnect(str(order_id), websocket, channel="order")
+
+
+@router.websocket("/ws/alerts/{slug}")
+async def websocket_alerts_endpoint(
+    websocket: WebSocket,
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """WebSocket endpoint for real-time low-stock alerts for restaurant staff by slug."""
+    await manager.connect(slug, websocket, channel="alerts")
+
+    try:
+        # Validate restaurant slug exists in DB
+        stmt = select(Restaurant.id).where(Restaurant.slug == slug)
+        res = await db.execute(stmt)
+        if res.scalar_one_or_none() is None:
+            await websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Restaurant slug not found",
+            )
+            return
+
+        # Keep connection open in a receive loop until client disconnects
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
+        manager.disconnect(slug, websocket, channel="alerts")
+

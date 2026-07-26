@@ -61,6 +61,29 @@ async def onboard_restaurant(
 
 
 @router.get(
+    "/me",
+    response_model=RestaurantResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_my_restaurant(
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the authenticated user's linked Restaurant profile."""
+    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not onboarded yet.",
+        )
+
+    return restaurant
+
+
+@router.get(
     "/{slug}/qrcode",
     response_model=RestaurantQRCodeResponse,
     status_code=status.HTTP_200_OK,

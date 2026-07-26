@@ -272,4 +272,7 @@ async def google_callback(
         await db.commit()
         await db.refresh(user)
 
-    return generate_token_pair(str(user.id), user.email, user.role.value)
+    tokens = generate_token_pair(str(user.id), user.email, user.role.value)
+    redirect_url = f"{settings.FRONTEND_BASE_URL}/oauth/callback#access_token={tokens['access_token']}&refresh_token={tokens['refresh_token']}"
+    return RedirectResponse(url=redirect_url)
+

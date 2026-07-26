@@ -95,13 +95,16 @@ async def test_google_callback_creates_new_user(mock_google_config):
         "httpx.AsyncClient.get", side_effect=mock_get
     ):
         response = client.get(
-            "/api/v1/auth/google/callback?code=mock_code&state=restaurant"
+            "/api/v1/auth/google/callback?code=mock_code&state=restaurant",
+            follow_redirects=False,
         )
-        assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data["token_type"] == "bearer"
+        assert response.status_code == 307
+        location = response.headers["location"]
+        assert location.startswith(
+            f"{settings.FRONTEND_BASE_URL}/oauth/callback#"
+        )
+        assert "access_token=" in location
+        assert "refresh_token=" in location
 
     # Verify user in database
     async with TestingSessionLocal() as session:
