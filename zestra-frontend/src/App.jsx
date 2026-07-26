@@ -2,27 +2,17 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/useAuthStore';
+
+// Pages & Components
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SkeletonLoader from './components/SkeletonLoader';
+import DashboardLayout from './layouts/DashboardLayout';
 
-const DashboardPlaceholder = () => {
-  const { user, logout } = useAuthStore();
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-(--background) text-(--text)">
-      <div className="bg-(--surface) p-8 rounded-[20px] shadow-lg border border-(--border) text-center">
-        <h1 className="text-2xl font-bold mb-4">Dashboard Area</h1>
-        <p className="mb-4 text-(--text-secondary)">Role: <span className="text-(--primary) font-semibold">{user?.role}</span></p>
-        <button 
-          onClick={logout} 
-          className="px-6 py-2 bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-[14px] transition-colors font-semibold"
-        >
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
-};
+// Temporary page components for the nested routes
+const DashboardHome = () => <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)"><h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1><p className="text-(--text-secondary) mt-2">Select an option from the sidebar to begin.</p></div>;
+const MenuPage = () => <div className="p-6 bg-(--surface) rounded-[20px] border border-(--border)">Menu Management (Coming Soon)</div>;
+const OrdersPage = () => <div className="p-6 bg-(--surface) rounded-[20px] border border-(--border)">Orders Tracking (Coming Soon)</div>;
 
 function App() {
   const { fetchUser, isAuthenticated } = useAuthStore();
@@ -33,7 +23,6 @@ function App() {
       if (localStorage.getItem('access_token')) {
         await fetchUser();
       }
-      // Wait for auth check to finish before removing the skeleton
       setIsInitializing(false);
     };
 
@@ -57,22 +46,22 @@ function App() {
         }}
       />
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
+        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
         
-        <Route 
-          path="/login" 
-          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} 
-        />
-        
-        <Route 
-          path="/register" 
-          element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} 
-        />
-        
+        {/* Protected Dashboard Routes */}
         <Route 
           path="/dashboard" 
-          element={isAuthenticated ? <DashboardPlaceholder /> : <Navigate to="/login" />} 
-        />
+          element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />}
+        >
+          {/* These render inside the <Outlet /> of DashboardLayout */}
+          <Route index element={<DashboardHome />} />
+          <Route path="menu" element={<MenuPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="*" element={<DashboardHome />} />
+        </Route>
       </Routes>
     </>
   );
