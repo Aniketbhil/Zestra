@@ -40,6 +40,7 @@ origins = list(
         f"{frontend_origin}/",
         "http://localhost",
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:3000/",
         "http://localhost:8000",
         "https://localhost:8000",
