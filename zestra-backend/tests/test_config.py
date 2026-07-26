@@ -9,5 +9,5 @@ def test_settings_default_load():
     assert settings.REFRESH_TOKEN_EXPIRE_DAYS == 7
     assert settings.DATABASE_URL.startswith("postgresql+asyncpg://")
     assert settings.REDIS_URL.startswith(("redis://", "rediss://"))
-    assert settings.FRONTEND_BASE_URL == "http://localhost:3000"
+    assert settings.FRONTEND_BASE_URL == "http://localhost:5173"
 

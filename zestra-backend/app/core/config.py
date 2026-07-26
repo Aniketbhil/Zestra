@@ -24,7 +24,7 @@ class Settings(BaseSettings):
         "http://localhost:8000/api/v1/auth/google/callback"
     )
 
-    FRONTEND_BASE_URL: str = "http://localhost:3000"
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(
         env_file=".env",

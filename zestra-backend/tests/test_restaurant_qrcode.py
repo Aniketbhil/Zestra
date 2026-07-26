@@ -74,7 +74,7 @@ async def test_get_restaurant_qrcode_success():
     data = qr_resp.json()
     assert "qr_code_base64" in data
     assert "menu_url" in data
-    assert data["menu_url"] == f"http://localhost:3000/menu/{slug}"
+    assert data["menu_url"] == f"{settings.FRONTEND_BASE_URL.rstrip('/')}/menu/{slug}"
 
     # Verify base64 string is valid PNG image
     decoded_bytes = base64.b64decode(data["qr_code_base64"])
