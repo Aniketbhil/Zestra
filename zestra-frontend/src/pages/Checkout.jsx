@@ -34,8 +34,8 @@ const Checkout = () => {
     const orderData = await placeOrder(slug, cart);
     if (orderData) {
       clearCart();
-      // Redirect to the live tracking page (we will build this next)
-      navigate(`/tracking/${orderData.id}`);
+      // UPDATE THIS LINE TO INCLUDE THE SLUG:
+      navigate(`/tracking/${slug}/${orderData.id}`);
     }
   };
 
