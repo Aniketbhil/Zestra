@@ -3,17 +3,27 @@ import { Download, Printer, Share2 } from 'lucide-react';
 import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 
 const QrCode = () => {
-  const { qrData, fetchQrCode, isLoading } = useRestaurantStore();
+  const { qrData, fetchQrCode, isLoading, restaurant, fetchMyRestaurant } = useRestaurantStore();
 
+  // 1. Ensure we have the restaurant profile
   useEffect(() => {
-    fetchQrCode();
-  }, [fetchQrCode]);
+    if (!restaurant) {
+      fetchMyRestaurant();
+    }
+  }, [restaurant, fetchMyRestaurant]);
+
+  // 2. Fetch the QR code using the actual slug
+  useEffect(() => {
+    if (restaurant?.slug) {
+      fetchQrCode(restaurant.slug);
+    }
+  }, [restaurant?.slug, fetchQrCode]);
 
   const handleDownload = () => {
     if (!qrData) return;
     const link = document.createElement('a');
     link.href = `data:image/png;base64,${qrData.qr_code_base64}`;
-    link.download = 'zestra-menu-qr.png';
+    link.download = `${restaurant?.slug || 'zestra'}-menu-qr.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
