@@ -14,6 +14,7 @@ import RestaurantOnboarding from "./pages/dashboard/RestaurantOnboarding";
 import Menu from "./pages/dashboard/Menu";
 import QrCode from "./pages/dashboard/QrCode";
 import Orders from "./pages/dashboard/Orders";
+import Inventory from './pages/dashboard/Inventory';
 
 import PublicMenu from "./pages/public/PublicMenu";
 import Checkout from "./pages/public/Checkout";
@@ -88,17 +89,16 @@ function App() {
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         {/* Protected Dashboard Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />
-          }
+        <Route 
+          path="/dashboard" 
+          element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />}
         >
           <Route index element={<DashboardHome />} />
           <Route path="onboard" element={<RestaurantOnboarding />} />
           <Route path="menu" element={<Menu />} />
           <Route path="qr" element={<QrCode />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="inventory" element={<Inventory />} />
           <Route path="*" element={<DashboardHome />} />
         </Route>
       </Routes>
