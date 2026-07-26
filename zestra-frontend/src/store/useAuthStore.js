@@ -33,15 +33,12 @@ const useAuthStore = create((set) => ({
   register: async (email, password, role) => {
     set({ isLoading: true });
     try {
-      const response = await api.post('/auth/register', { email, password, role });
-      const { access_token, refresh_token } = response.data;
+      // We make the API call but intentionally ignore the returned tokens
+      // so the user is forced to manually log in afterwards.
+      await api.post('/auth/register', { email, password, role });
       
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
-      
-      await useAuthStore.getState().fetchUser();
-      
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! Please log in.');
+      set({ isLoading: false });
       return true;
     } catch (error) {
       toast.error(error.response?.data?.detail?.[0]?.msg || 'Registration failed.');

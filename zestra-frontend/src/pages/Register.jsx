@@ -9,7 +9,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('customer');
-  const { register, isLoading, logout } = useAuthStore();
+  const { register, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -27,7 +27,6 @@ const Register = () => {
 
     const success = await register(email, password, role);
     if (success) {
-      logout();
       navigate('/login');
     }
   };
