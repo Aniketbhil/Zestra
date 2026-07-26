@@ -13,23 +13,21 @@ const STATUS_STEPS = [
 const OrderTracking = () => {
   const { slug, orderId } = useParams();
   const navigate = useNavigate();
-  const { currentOrder, connectToOrderStream, disconnectStream } = useOrderStore();
+  const { currentOrder, fetchOrder, connectToOrderStream, disconnectStream } = useOrderStore();
 
   useEffect(() => {
+    // If order is missing (user refreshed the page), fetch it from backend
     if (!currentOrder) {
-      // If the user refreshed, they lose the current order from memory.
-      // Once Aniket adds the GET endpoint, we will fetch it here.
-      // For now, redirect them back to the menu.
-      navigate(`/menu/${slug}`);
-      return;
+      fetchOrder(orderId);
+    } else {
+      // Connect to websocket using only the orderId as per Aniket's instructions
+      connectToOrderStream(orderId);
     }
-
-    connectToOrderStream(slug, orderId);
 
     return () => {
       disconnectStream();
     };
-  }, [slug, orderId, currentOrder, connectToOrderStream, disconnectStream, navigate]);
+  }, [orderId, currentOrder, fetchOrder, connectToOrderStream, disconnectStream]);
 
   if (!currentOrder) return null;
 

@@ -1,29 +1,31 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/auth/useAuthStore';
 import toast from 'react-hot-toast';
 
 const OAuthCallback = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { fetchUser } = useAuthStore();
   const hasProcessed = useRef(false);
 
   useEffect(() => {
-    // Prevent React 18 strict mode double-firing
     if (hasProcessed.current) return;
     
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    // Parse the hash fragment (e.g., #access_token=...)
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
 
     if (accessToken && refreshToken) {
       hasProcessed.current = true;
       
-      // 1. Save tokens to local storage
+      // Clear the tokens from the browser URL immediately
+      window.history.replaceState(null, '', window.location.pathname);
+      
       localStorage.setItem('access_token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
       
-      // 2. Fetch user profile with new token, then redirect
       fetchUser().then(() => {
         toast.success('Successfully logged in with Google!');
         navigate('/dashboard');
@@ -32,7 +34,7 @@ const OAuthCallback = () => {
       toast.error('Google login failed. Missing credentials.');
       navigate('/login');
     }
-  }, [searchParams, navigate, fetchUser]);
+  }, [navigate, fetchUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-(--background)">

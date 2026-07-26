@@ -59,13 +59,13 @@ function App() {
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
         
-        {/* Public Menu & Ordering Routes (No Auth Required) */}
+        {/* Public Menu Route (No Auth Required) */}
         <Route path="/menu/:slug" element={<PublicMenu />} />
         <Route path="/checkout/:slug" element={<Checkout />} />
         <Route path="/tracking/:slug/:orderId" element={<OrderTracking />} />
-
-        {/* Google OAuth Callback Catcher */}
-        <Route path="/oauth-callback" element={<OAuthCallback />} />
+        
+        {/* Google OAuth Callback Catcher - FIX: Changed dash to slash */}
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         {/* Protected Dashboard Routes */}
         <Route 
