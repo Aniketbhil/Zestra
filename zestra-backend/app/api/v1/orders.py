@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.core.deps import require_role
 from app.db.session import get_db
 from app.models.order import Order, OrderStatus
+from app.models.restaurant import Restaurant
 from app.models.user import User, UserRole
 from app.schemas.order import OrderResponse, OrderStatusUpdate
 from app.services.connection_manager import manager
@@ -18,6 +19,66 @@ VALID_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
     OrderStatus.PREPARING: OrderStatus.READY,
     OrderStatus.READY: OrderStatus.SERVED,
 }
+
+
+async def get_user_restaurant(db: AsyncSession, user_id: UUID) -> Restaurant:
+    """Fetch the restaurant belonging to the current user, or raise 400 Bad Request if not onboarded."""
+    stmt = select(Restaurant).where(Restaurant.owner_id == user_id)
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Complete restaurant onboarding first.",
+        )
+    return restaurant
+
+
+@router.get(
+    "",
+    response_model=list[OrderResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def list_orders(
+    status_param: str | None = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+):
+    """Fetch orders for the authenticated restaurant user's restaurant.
+
+    - Requires RESTAURANT role and owner lookup.
+    - Optional `?status=` query param to filter statuses (comma-separated, e.g. `?status=received,preparing`).
+    - If no status param is passed, defaults to all non-served orders (status != served).
+    - Returns orders with items and total, ordered by created_at descending (newest first).
+    """
+    restaurant = await get_user_restaurant(db, current_user.id)
+
+    stmt = (
+        select(Order)
+        .where(Order.restaurant_id == restaurant.id)
+        .options(selectinload(Order.items))
+        .order_by(Order.created_at.desc())
+    )
+
+    if status_param:
+        status_strings = [s.strip() for s in status_param.split(",") if s.strip()]
+        valid_statuses = []
+        for s in status_strings:
+            try:
+                valid_statuses.append(OrderStatus(s))
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid status filter value: '{s}'.",
+                )
+        stmt = stmt.where(Order.status.in_(valid_statuses))
+    else:
+        stmt = stmt.where(Order.status != OrderStatus.SERVED)
+
+    res = await db.execute(stmt)
+    orders = res.scalars().all()
+    return orders
+
 
 
 @router.get(

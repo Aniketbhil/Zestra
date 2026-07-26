@@ -313,3 +313,139 @@ async def test_order_status_nonexistent_order():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_list_orders_restaurant_scoping_and_status_filtering():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="list_owner@restaurant.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+        )
+        customer = User(
+            email="list_customer@example.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.CUSTOMER,
+            is_active=True,
+        )
+        session.add_all([owner, customer])
+        await session.commit()
+
+        restaurant = Restaurant(
+            owner_id=owner.id,
+            name="List Orders Diner",
+            slug="list-orders-diner",
+        )
+        session.add(restaurant)
+        await session.commit()
+
+        item = MenuItem(
+            restaurant_id=restaurant.id,
+            name="Burger",
+            price=Decimal("12.00"),
+            category="Mains",
+            is_available=True,
+        )
+        session.add(item)
+        await session.commit()
+
+        order_received = Order(
+            restaurant_id=restaurant.id,
+            status=OrderStatus.RECEIVED,
+            total=Decimal("12.00"),
+        )
+        order_preparing = Order(
+            restaurant_id=restaurant.id,
+            status=OrderStatus.PREPARING,
+            total=Decimal("24.00"),
+        )
+        order_ready = Order(
+            restaurant_id=restaurant.id,
+            status=OrderStatus.READY,
+            total=Decimal("36.00"),
+        )
+        order_served = Order(
+            restaurant_id=restaurant.id,
+            status=OrderStatus.SERVED,
+            total=Decimal("48.00"),
+        )
+        session.add_all([order_received, order_preparing, order_ready, order_served])
+        await session.commit()
+
+        owner_id = owner.id
+        customer_id = customer.id
+
+    owner_token = create_access_token({"sub": str(owner_id)})
+    owner_headers = {"Authorization": f"Bearer {owner_token}"}
+
+    # 1. Default GET /api/v1/orders (returns all non-served orders)
+    res_default = client.get("/api/v1/orders", headers=owner_headers)
+    assert res_default.status_code == 200
+    orders_default = res_default.json()
+    assert len(orders_default) == 3
+    statuses_default = [o["status"] for o in orders_default]
+    assert "served" not in statuses_default
+    assert set(statuses_default) == {"received", "preparing", "ready"}
+
+    # 2. Filter by status: ?status=received,preparing
+    res_filter = client.get(
+        "/api/v1/orders?status=received,preparing", headers=owner_headers
+    )
+    assert res_filter.status_code == 200
+    orders_filter = res_filter.json()
+    assert len(orders_filter) == 2
+    assert set(o["status"] for o in orders_filter) == {"received", "preparing"}
+
+    # 3. Filter by status: ?status=served
+    res_served = client.get("/api/v1/orders?status=served", headers=owner_headers)
+    assert res_served.status_code == 200
+    orders_served = res_served.json()
+    assert len(orders_served) == 1
+    assert orders_served[0]["status"] == "served"
+
+    # 4. Invalid status filter: ?status=invalid
+    res_invalid = client.get(
+        "/api/v1/orders?status=invalid", headers=owner_headers
+    )
+    assert res_invalid.status_code == 400
+    assert "Invalid status filter value" in res_invalid.json()["detail"]
+
+    # 5. Customer role attempt (should be 403 Forbidden)
+    customer_token = create_access_token({"sub": str(customer_id)})
+    customer_headers = {"Authorization": f"Bearer {customer_token}"}
+    res_customer = client.get("/api/v1/orders", headers=customer_headers)
+    assert res_customer.status_code == 403
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_list_orders_not_onboarded():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="not_onboarded@restaurant.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+        )
+        session.add(owner)
+        await session.commit()
+        owner_id = owner.id
+
+    token = create_access_token({"sub": str(owner_id)})
+    headers = {"Authorization": f"Bearer {token}"}
+    res = client.get("/api/v1/orders", headers=headers)
+    assert res.status_code == 400
+    assert res.json()["detail"] == "Complete restaurant onboarding first."
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
