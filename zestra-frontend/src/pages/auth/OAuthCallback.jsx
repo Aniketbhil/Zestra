@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
+import useAuthStore from '../../store/auth/useAuthStore';
 import toast from 'react-hot-toast';
 
 const OAuthCallback = () => {

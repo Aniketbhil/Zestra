@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import useAuthStore from './store/useAuthStore';
+import useAuthStore from './store/auth/useAuthStore';
 
 // Pages & Components
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import OAuthCallback from './pages/auth/OAuthCallback';
 import SkeletonLoader from './components/SkeletonLoader';
 import DashboardLayout from './layouts/DashboardLayout';
-import RestaurantOnboarding from './pages/RestaurantOnboarding';
-import Menu from './pages/Menu';
-import QrCode from './pages/QrCode';
-import PublicMenu from './pages/PublicMenu';
-import OAuthCallback from './pages/OAuthCallback';
-import Checkout from './pages/Checkout';
-import OrderTracking from './pages/OrderTracking';
+
+import RestaurantOnboarding from './pages/dashboard/RestaurantOnboarding';
+import Menu from './pages/dashboard/Menu';
+import QrCode from './pages/dashboard/QrCode';
+
+import PublicMenu from './pages/public/PublicMenu';
+import Checkout from './pages/public/Checkout';
+import OrderTracking from './pages/public/OrderTracking';
 
 // Temporary page components for the nested routes
 const DashboardHome = () => <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)"><h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1><p className="text-(--text-secondary) mt-2">Select an option from the sidebar to begin.</p></div>;

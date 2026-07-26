@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, MapPin, AlignLeft, ArrowRight } from 'lucide-react';
-import useRestaurantStore from '../store/useRestaurantStore';
+import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 import toast from 'react-hot-toast';
 
 const RestaurantOnboarding = () => {

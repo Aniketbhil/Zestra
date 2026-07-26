@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Search, X, Image as ImageIcon } from 'lucide-react';
-import useMenuStore from '../store/useMenuStore';
+import useMenuStore from '../../store/dashboard/useMenuStore';
 
 const Menu = () => {
   const { menuItems, isLoading, fetchMenu, addMenuItem, updateMenuItem, deleteMenuItem } = useMenuStore();

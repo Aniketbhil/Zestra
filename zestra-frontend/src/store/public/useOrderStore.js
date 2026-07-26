@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import api from '../services/api';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const useOrderStore = create((set, get) => ({

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Download, Printer, Share2 } from 'lucide-react';
-import useRestaurantStore from '../store/useRestaurantStore';
+import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 
 const QrCode = () => {
   const { qrData, fetchQrCode, isLoading } = useRestaurantStore();

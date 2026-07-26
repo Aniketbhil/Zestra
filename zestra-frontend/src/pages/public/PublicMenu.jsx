@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Image as ImageIcon, ArrowRight, Plus, Minus, UtensilsCrossed } from 'lucide-react';
-import usePublicMenuStore from '../store/usePublicMenuStore';
+import usePublicMenuStore from '../../store/public/usePublicMenuStore';
 
 const PublicMenu = () => {
   const { slug } = useParams();

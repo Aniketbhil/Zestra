@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Receipt, Utensils } from 'lucide-react';
-import usePublicMenuStore from '../store/usePublicMenuStore';
-import useOrderStore from '../store/useOrderStore';
+import usePublicMenuStore from '../../store/public/usePublicMenuStore';
+import useOrderStore from '../../store/public/useOrderStore';
 
 const Checkout = () => {
   const { slug } = useParams();

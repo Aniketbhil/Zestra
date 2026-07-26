@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, ChefHat, ShoppingBag, CheckCircle2, ArrowLeft } from 'lucide-react';
-import useOrderStore from '../store/useOrderStore';
+import useOrderStore from '../../store/public/useOrderStore';
 
 const STATUS_STEPS = [
   { id: 'received', label: 'Order Received', icon: Clock, desc: 'We have got your order' },
