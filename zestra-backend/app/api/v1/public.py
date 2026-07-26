@@ -1,10 +1,17 @@
+import logging
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from arq import create_pool
+from arq.connections import RedisSettings
+
+from app.core.config import settings
 from app.core.deps import get_optional_current_user
+from app.core.redis import get_arq_pool
+
 from app.db.session import get_db
 from app.models.menu_item import MenuItem
 from app.models.order import Order, OrderItem, OrderStatus
@@ -17,6 +24,9 @@ from app.schemas.menu_item import (
 )
 from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
 from app.services.connection_manager import manager
+
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/public", tags=["Public"])
 
@@ -75,6 +85,7 @@ async def get_public_menu(
 async def create_public_order(
     slug: str,
     order_in: OrderCreate | list[OrderItemCreate],
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
@@ -188,4 +199,21 @@ async def create_public_order(
         },
     )
 
+    pool = getattr(request.app.state, "redis_pool", None) or getattr(
+        request.app.state, "arq_pool", None
+    )
+    if pool is not None:
+        try:
+            await pool.enqueue_job("notify_order_placed", created_order.id)
+        except Exception as e:
+            logger.warning(f"Failed to enqueue notify_order_placed job: {e}")
+    else:
+        try:
+            pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+            await pool.enqueue_job("notify_order_placed", created_order.id)
+        except Exception as e:
+            logger.warning(f"Failed to enqueue notify_order_placed job: {e}")
+
     return created_order
+
+
