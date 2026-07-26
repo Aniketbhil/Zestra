@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SkeletonLoader from './components/SkeletonLoader';
 import DashboardLayout from './layouts/DashboardLayout';
+import RestaurantOnboarding from './pages/RestaurantOnboarding';
 
 // Temporary page components for the nested routes
 const DashboardHome = () => <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)"><h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1><p className="text-(--text-secondary) mt-2">Select an option from the sidebar to begin.</p></div>;
@@ -58,6 +59,7 @@ function App() {
         >
           {/* These render inside the <Outlet /> of DashboardLayout */}
           <Route index element={<DashboardHome />} />
+          <Route path="onboard" element={<RestaurantOnboarding />} />
           <Route path="menu" element={<MenuPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="*" element={<DashboardHome />} />
