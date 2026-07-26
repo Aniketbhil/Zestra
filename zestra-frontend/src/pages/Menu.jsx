@@ -3,8 +3,9 @@ import { Plus, Edit2, Trash2, Search, X, Image as ImageIcon } from 'lucide-react
 import useMenuStore from '../store/useMenuStore';
 
 const Menu = () => {
-  const { menuItems, isLoading, fetchMenu, addMenuItem, deleteMenuItem } = useMenuStore();
+  const { menuItems, isLoading, fetchMenu, addMenuItem, updateMenuItem, deleteMenuItem } = useMenuStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
@@ -28,16 +29,43 @@ const Menu = () => {
     }));
   };
 
+  const handleOpenCreate = () => {
+    setEditingItem(null);
+    setFormData({ name: '', description: '', price: '', category: '', image_url: '', is_available: true });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (item) => {
+    setEditingItem(item);
+    setFormData({
+      name: item.name,
+      description: item.description || '',
+      price: item.price,
+      category: item.category,
+      image_url: item.image_url || '',
+      is_available: item.is_available
+    });
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await addMenuItem({
+    const payload = {
       ...formData,
       price: parseFloat(formData.price),
       image_url: formData.image_url.trim() === '' ? null : formData.image_url
-    });
+    };
+
+    let success;
+    if (editingItem) {
+      success = await updateMenuItem(editingItem.id, payload);
+    } else {
+      success = await addMenuItem(payload);
+    }
     
     if (success) {
       setIsModalOpen(false);
+      setEditingItem(null);
       setFormData({ name: '', description: '', price: '', category: '', image_url: '', is_available: true });
     }
   };
@@ -54,7 +82,7 @@ const Menu = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-(--text)">Menu Management</h1>
-          <p className="text-(--text-secondary) text-sm mt-1">Manage your restaurant's digital menu</p>
+          <p className="text-(--text-secondary) text-sm mt-1">Manage your restaurant's digital menu ({menuItems.length} items)</p>
         </div>
         
         <div className="flex w-full sm:w-auto items-center gap-3">
@@ -69,7 +97,7 @@ const Menu = () => {
             />
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreate}
             className="flex items-center gap-2 px-4 py-2 bg-(--primary) hover:bg-(--primary-hover) text-white rounded-[14px] font-semibold text-sm transition-colors whitespace-nowrap shadow-sm shadow-(--primary)/25"
           >
             <Plus className="w-4 h-4" /> Add Item
@@ -123,12 +151,17 @@ const Menu = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <button className="p-2 text-(--text-muted) hover:text-(--primary) hover:bg-(--primary)/10 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleOpenEdit(item)}
+                        className="p-2 text-(--text-muted) hover:text-(--primary) hover:bg-(--primary)/10 rounded-lg transition-colors"
+                        title="Edit Item"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => deleteMenuItem(item.id)}
                         className="p-2 text-(--text-muted) hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                        title="Delete Item"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -141,12 +174,12 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Add Menu Item Modal */}
+      {/* Add / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-(--surface) w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-(--border) flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-(--text)">Add New Item</h2>
+              <h2 className="text-lg font-bold text-(--text)">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-(--text-muted) hover:text-(--text) transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -187,7 +220,7 @@ const Menu = () => {
               <div className="pt-4 mt-6 border-t border-(--border) flex justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-[14px] font-semibold text-(--text-secondary) hover:bg-(--surface-secondary) transition-colors">Cancel</button>
                 <button type="submit" disabled={isLoading} className="px-5 py-2.5 rounded-[14px] font-semibold text-white bg-(--primary) hover:bg-(--primary-hover) shadow-sm shadow-(--primary)/25 transition-colors disabled:opacity-70">
-                  {isLoading ? 'Saving...' : 'Save Item'}
+                  {isLoading ? 'Saving...' : (editingItem ? 'Update Item' : 'Save Item')}
                 </button>
               </div>
             </form>

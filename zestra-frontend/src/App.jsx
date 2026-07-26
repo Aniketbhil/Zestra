@@ -11,6 +11,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import RestaurantOnboarding from './pages/RestaurantOnboarding';
 import Menu from './pages/Menu';
 import QrCode from './pages/QrCode';
+import PublicMenu from './pages/PublicMenu';
 
 // Temporary page components for the nested routes
 const DashboardHome = () => <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)"><h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1><p className="text-(--text-secondary) mt-2">Select an option from the sidebar to begin.</p></div>;
@@ -52,6 +53,9 @@ function App() {
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
+        
+        {/* Public Menu Route (No Auth Required) */}
+        <Route path="/menu/:slug" element={<PublicMenu />} />
         
         {/* Protected Dashboard Routes */}
         <Route 
