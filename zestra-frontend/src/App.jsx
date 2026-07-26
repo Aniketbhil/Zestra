@@ -15,6 +15,7 @@ import Menu from "./pages/dashboard/Menu";
 import QrCode from "./pages/dashboard/QrCode";
 import Orders from "./pages/dashboard/Orders";
 import Inventory from './pages/dashboard/Inventory';
+import Analytics from './pages/dashboard/Analytics';
 
 import PublicMenu from "./pages/public/PublicMenu";
 import Checkout from "./pages/public/Checkout";
@@ -99,6 +100,7 @@ function App() {
           <Route path="qr" element={<QrCode />} />
           <Route path="orders" element={<Orders />} />
           <Route path="inventory" element={<Inventory />} />
+          <Route path="analytics" element={<Analytics />} />
           <Route path="*" element={<DashboardHome />} />
         </Route>
       </Routes>
