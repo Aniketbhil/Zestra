@@ -9,6 +9,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.menu_item import MenuItem
+    from app.models.order import Order
     from app.models.user import User
 
 
@@ -54,4 +55,6 @@ class Restaurant(Base):
     menu_items: Mapped[list["MenuItem"]] = relationship(
         "MenuItem", back_populates="restaurant", cascade="all, delete-orphan"
     )
-
+    orders: Mapped[list["Order"]] = relationship(
+        "Order", back_populates="restaurant", cascade="all, delete-orphan"
+    )

@@ -130,6 +130,7 @@ async def update_menu_item(
                 "item_id": str(item.id),
                 "is_available": item.is_available,
             },
+            channel="menu",
         )
 
     return item

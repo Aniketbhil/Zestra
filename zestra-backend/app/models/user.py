@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.order import Order
     from app.models.restaurant import Restaurant
 
 
@@ -70,4 +71,5 @@ class User(Base):
     restaurant: Mapped["Restaurant | None"] = relationship(
         "Restaurant", back_populates="owner", uselist=False
     )
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="customer")
 

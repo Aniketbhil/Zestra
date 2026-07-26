@@ -64,11 +64,11 @@ async def test_ws_menu_valid_slug():
 
     # 2. Connect via WebSocket
     with client.websocket_connect(f"/ws/menu/{slug}") as websocket:
-        assert slug in manager.active_connections
-        assert len(manager.active_connections[slug]) == 1
+        assert f"menu:{slug}" in manager.active_connections
+        assert len(manager.active_connections[f"menu:{slug}"]) == 1
 
     # 3. On context exit (disconnect), verify socket is unregistered
-    assert slug not in manager.active_connections
+    assert f"menu:{slug}" not in manager.active_connections
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -86,7 +86,7 @@ async def test_ws_menu_invalid_slug():
             pass
 
     assert exc_info.value.code == 1008
-    assert invalid_slug not in manager.active_connections
+    assert f"menu:{invalid_slug}" not in manager.active_connections
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

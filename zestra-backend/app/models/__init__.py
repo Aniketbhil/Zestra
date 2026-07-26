@@ -1,7 +1,17 @@
 from app.models.menu_item import MenuItem
+from app.models.order import Order, OrderItem, OrderStatus
 from app.models.restaurant import Restaurant
 from app.models.user import AuthProvider, User, UserRole
 
-__all__ = ["User", "AuthProvider", "UserRole", "Restaurant", "MenuItem"]
+__all__ = [
+    "User",
+    "AuthProvider",
+    "UserRole",
+    "Restaurant",
+    "MenuItem",
+    "Order",
+    "OrderItem",
+    "OrderStatus",
+]
 
 

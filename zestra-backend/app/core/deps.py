@@ -9,6 +9,43 @@ from app.db.session import get_db
 from app.models.user import User, UserRole
 
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
+
+
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Optional dependency that decodes the JWT access token if present and returns the current user."""
+    if not credentials or not credentials.credentials:
+        return None
+
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+    except jwt.PyJWTError:
+        return None
+
+    token_type = payload.get("type")
+    if token_type != "access":
+        return None
+
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+
+    try:
+        user_id = UUID(user_id_str)
+    except ValueError:
+        return None
+
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return None
+
+    return user
 
 
 async def get_current_user(

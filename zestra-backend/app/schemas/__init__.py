@@ -14,6 +14,14 @@ from app.schemas.menu_item import (
 from app.schemas.restaurant import RestaurantCreate, RestaurantResponse
 from app.schemas.user import UserCreate
 
+from app.schemas.order import (
+    OrderCreate,
+    OrderItemCreate,
+    OrderItemResponse,
+    OrderResponse,
+    OrderStatusUpdate,
+)
+
 __all__ = [
     "UserCreate",
     "UserRegisterRequest",
@@ -27,5 +35,10 @@ __all__ = [
     "PublicMenuItemResponse",
     "PublicMenuCategoryResponse",
     "PublicMenuResponse",
+    "OrderItemCreate",
+    "OrderCreate",
+    "OrderItemResponse",
+    "OrderResponse",
+    "OrderStatusUpdate",
 ]
 
