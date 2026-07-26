@@ -12,15 +12,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="h-16 bg-(--surface)/80 backdrop-blur-xl border-b border-(--border) flex items-center justify-between px-6 sticky top-0 z-10">
+    <nav className="h-16 bg-(--surface)/80 backdrop-blur-xl border-b border-(--border) flex items-center justify-end px-6 sticky top-0 z-10">
       
-      {/* Left side: Dashboard Title */}
-      <div className="flex items-center gap-4">
-        <h2 className="text-lg font-bold text-(--text)">
-          {user?.role === 'restaurant' ? 'Restaurant Dashboard' : 'Customer Dashboard'}
-        </h2>
-      </div>
-
       {/* Right side: Role & Sign Out */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-(--surface-secondary) rounded-full border border-(--border)">

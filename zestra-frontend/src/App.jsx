@@ -16,25 +16,11 @@ import QrCode from "./pages/dashboard/QrCode";
 import Orders from "./pages/dashboard/Orders";
 import Inventory from './pages/dashboard/Inventory';
 import Analytics from './pages/dashboard/Analytics';
+import DashboardHome from './pages/dashboard/DashboardHome';
 
 import PublicMenu from "./pages/public/PublicMenu";
 import Checkout from "./pages/public/Checkout";
 import OrderTracking from "./pages/public/OrderTracking";
-
-// Temporary page components for the nested routes
-const DashboardHome = () => (
-  <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)">
-    <h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1>
-    <p className="text-(--text-secondary) mt-2">
-      Select an option from the sidebar to begin.
-    </p>
-  </div>
-);
-const OrdersPage = () => (
-  <div className="p-6 bg-(--surface) rounded-[20px] border border-(--border)">
-    Orders Tracking (Coming Soon)
-  </div>
-);
 
 function App() {
   const { fetchUser, isAuthenticated } = useAuthStore();
