@@ -10,6 +10,7 @@ import SkeletonLoader from './components/SkeletonLoader';
 import DashboardLayout from './layouts/DashboardLayout';
 import RestaurantOnboarding from './pages/RestaurantOnboarding';
 import Menu from './pages/Menu';
+import QrCode from './pages/QrCode';
 
 // Temporary page components for the nested routes
 const DashboardHome = () => <div className="p-6 bg-(--surface) rounded-[20px] shadow-sm border border-(--border)"><h1 className="text-xl font-bold text-(--text)">Welcome to Zestra!</h1><p className="text-(--text-secondary) mt-2">Select an option from the sidebar to begin.</p></div>;
@@ -61,6 +62,7 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="onboard" element={<RestaurantOnboarding />} />
           <Route path="menu" element={<Menu />} />
+          <Route path="qr" element={<QrCode />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="*" element={<DashboardHome />} />
         </Route>
