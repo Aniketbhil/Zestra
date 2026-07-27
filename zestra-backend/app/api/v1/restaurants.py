@@ -54,6 +54,7 @@ async def onboard_restaurant(
         slug=slug,
         description=payload.description,
         address=payload.address,
+        image_url=payload.image_url,
     )
     db.add(restaurant)
     await db.commit()
@@ -97,7 +98,7 @@ async def update_my_restaurant(
 ):
     """Update the authenticated user's Restaurant details.
 
-    Allows updating description, address, contact_number, business_hours.
+    Allows updating description, address, contact_number, business_hours, image_url.
     Name and slug are locked and cannot be changed.
     """
     stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
@@ -118,6 +119,8 @@ async def update_my_restaurant(
         restaurant.contact_number = payload.contact_number
     if payload.business_hours is not None:
         restaurant.business_hours = payload.business_hours
+    if payload.image_url is not None:
+        restaurant.image_url = payload.image_url
 
     await db.commit()
     await db.refresh(restaurant)

@@ -71,5 +71,6 @@ class PublicMenuCategoryResponse(BaseModel):
 
 class PublicMenuResponse(BaseModel):
     name: str
+    image_url: str | None = None
     categories: list[PublicMenuCategoryResponse]
 

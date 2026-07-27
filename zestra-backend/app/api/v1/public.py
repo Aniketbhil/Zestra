@@ -1,6 +1,6 @@
 import logging
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -26,12 +26,40 @@ from app.schemas.menu_item import (
     PublicMenuResponse,
 )
 from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
+from app.schemas.restaurant import PublicRestaurantResponse
 from app.services.connection_manager import manager
 
 logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/public", tags=["Public"])
+
+
+@router.get(
+    "/restaurants",
+    response_model=list[PublicRestaurantResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_public_restaurants(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Fetch list of onboarded restaurants for customer selection.
+
+    No auth required.
+    Supports optional pagination via limit and offset query params (default limit=20, offset=0).
+    Does not expose owner_id or internal user data.
+    """
+    stmt = (
+        select(Restaurant)
+        .order_by(Restaurant.name.asc())
+        .offset(offset)
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    restaurants = res.scalars().all()
+    return restaurants
 
 
 @router.get(
@@ -76,6 +104,7 @@ async def get_public_menu(
 
     return PublicMenuResponse(
         name=restaurant.name,
+        image_url=restaurant.image_url,
         categories=categories_list,
     )
 
