@@ -1,101 +1,160 @@
-import { useEffect } from 'react';
-import { Sparkles, RefreshCw, Bot } from 'lucide-react';
-import useAiStore from '../../store/dashboard/useAiStore';
+import { useState, useEffect } from 'react';
+import { Sparkles, RefreshCw, Zap, Bot, Loader2, ArrowRight } from 'lucide-react';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 const AiAssistant = () => {
-  const { insights, isLoading, fetchInsights } = useAiStore();
+  const [insights, setInsights] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    // Only fetch if we don't already have insights loaded in memory
-    if (!insights) {
-      fetchInsights();
+  // Fetch the insights summary from the backend
+  const fetchInsights = async (forceRefresh = false) => {
+    if (forceRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+
+    try {
+      // Use the refresh=true query parameter to bypass the Redis cache when requested
+      const endpoint = forceRefresh ? '/ai/insights?refresh=true' : '/ai/insights';
+      const response = await api.get(endpoint);
+      setInsights(response.data.summary);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to load AI Insights");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [insights, fetchInsights]);
-
-  const handleRefresh = () => {
-    fetchInsights(true); // Forces backend to bypass Redis cache
   };
 
+  useEffect(() => {
+    fetchInsights();
+  }, []);
+
+  // --- Dynamic Formatting Engine ---
+  // This takes the raw LLM text block and turns it into a beautiful, scannable dashboard list.
+  const formatInsights = (text) => {
+    if (!text) return [];
+
+    // 1. Clean up Markdown and split into distinct sentences/points
+    const rawItems = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-(--text) font-black">$1</strong>') // Convert markdown bold
+      .split(/(?:\n|\.\s+)/) // Split by newline or periods followed by a space
+      .map(s => s.replace(/^\s*[-*]\s*/, '').trim()) // Remove markdown bullets
+      .filter(s => s.length > 10); // Filter out empty strings or random artifacts
+
+    // 2. Wrap important values and keywords in colorful HTML badges
+    return rawItems.map(sentence => {
+      let formatted = sentence
+        // Highlight Revenue & Money (e.g., $434.05)
+        .replace(/(\$\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="text-emerald-700 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-200 shadow-sm">$1</span>')
+        // Highlight Times & Peak Hours (e.g., 18:00, 7:00 PM)
+        .replace(/\b((?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*[AaPp][Mm]|(?:[01][0-9]|2[0-3]):[0-5][0-9])\b/g, '<span class="text-amber-700 font-extrabold bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 shadow-sm">$1</span>')
+        // Keyword Accent: Sales & Revenue
+        .replace(/\b(revenue|sales|profit|income)\b/gi, '<span class="text-emerald-600 font-bold">$1</span>')
+        // Keyword Accent: Items & Popularity
+        .replace(/\b(top-selling|best-selling|popular|top items?)\b/gi, '<span class="text-purple-600 font-bold">$1</span>')
+        // Keyword Accent: Busy periods
+        .replace(/\b(peak hour|busy|rush|traffic)\b/gi, '<span class="text-amber-600 font-bold">$1</span>')
+        // Keyword Accent: Actions & Suggestions
+        .replace(/\b(recommendation|recommend|suggest|strategy|action)\b/gi, '<span class="text-blue-600 font-bold">$1</span>');
+
+      // Ensure the line ends with proper punctuation
+      if (!formatted.endsWith('.') && !formatted.endsWith('!') && !formatted.endsWith('?') && !formatted.endsWith('>')) {
+          formatted += '.';
+      }
+
+      return formatted;
+    });
+  };
+
+  const formattedLines = formatInsights(insights);
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-8">
+    <div className="max-w-5xl mx-auto space-y-6 pb-12 px-4 sm:px-6">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-(--text) flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-(--primary)" />
-            AI Operations Assistant
-          </h1>
-          <p className="text-(--text-secondary) text-sm mt-1">
-            Powered by Gemini to analyze your restaurant's performance.
-          </p>
-        </div>
-        
-        <button 
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-(--surface) border border-(--border) hover:bg-(--surface-secondary) text-(--text) rounded-[14px] font-semibold text-sm transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> 
-          {isLoading ? 'Analyzing...' : 'Generate Fresh Insights'}
-        </button>
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-(--text) flex items-center gap-2">
+          <Bot className="w-6 h-6 text-purple-600" /> Executive AI Assistant
+        </h1>
+        <p className="text-(--text-secondary) text-sm mt-1">
+          Powered by Gemini. Instantly analyze your restaurant's performance.
+        </p>
       </div>
 
-      {/* Main Content Area */}
-      <div className="bg-(--surface) rounded-3xl border border-(--border) shadow-sm overflow-hidden relative">
+      {/* Main Insights Card */}
+      <div className="bg-(--surface) rounded-4xl border border-(--border) shadow-xl p-8 sm:p-12 min-h-150 relative overflow-hidden flex flex-col">
         
-        {/* Top Accent Bar */}
-        <div className="h-1.5 w-full bg-linear-to-r from-(--primary) to-blue-500"></div>
+        {/* Decorative Background Glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none -mr-20 -mt-20"></div>
 
-        <div className="p-8">
-          {isLoading && !insights ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="relative mb-6">
-                <div className="w-16 h-16 bg-(--primary)/10 rounded-full animate-ping absolute inset-0"></div>
-                <div className="w-16 h-16 bg-(--surface) border-2 border-(--primary) rounded-full flex items-center justify-center relative z-10">
-                  <Bot className="w-8 h-8 text-(--primary) animate-pulse" />
-                </div>
-              </div>
-              <h3 className="text-lg font-bold text-(--text)">Analyzing your data...</h3>
-              <p className="text-(--text-muted) text-sm mt-2 max-w-sm">
-                Gemini is looking at your sales, top items, and hourly traffic to generate actionable advice.
-              </p>
+        {/* Card Header & Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12 relative z-10 border-b border-(--border) pb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-purple-200">
+              <Sparkles className="w-7 h-7" />
             </div>
-          ) : !insights ? (
-            <div className="text-center py-12 text-(--text-muted)">
-              No insights available. Try refreshing.
+            <div>
+              <h2 className="text-2xl font-extrabold text-(--text) tracking-tight">Operational Insights</h2>
+              <p className="text-(--text-muted) font-medium mt-0.5">Real-time analysis of today's menu and sales data</p>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => fetchInsights(true)}
+            disabled={isRefreshing || isLoading}
+            className="px-5 py-3 bg-(--surface-secondary) hover:bg-(--border) border border-(--border) text-(--text) font-bold rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 group shadow-sm active:scale-95"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-purple-600' : 'group-hover:text-purple-600'}`} />
+            {isRefreshing ? 'Analyzing Data...' : 'Refresh Analysis'}
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6 shadow-inner relative">
+                <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <Bot className="w-8 h-8 text-purple-600 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-bold text-(--text) mb-2">Gemini is thinking...</h3>
+              <p className="text-(--text-secondary) font-medium">Crunching your numbers to find actionable insights.</p>
+            </div>
+          ) : formattedLines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 bg-(--surface-secondary) rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-(--text-muted)" />
+              </div>
+              <h3 className="text-xl font-bold text-(--text) mb-1">Not enough data</h3>
+              <p className="text-(--text-secondary)">We need a few more orders to generate meaningful insights today.</p>
             </div>
           ) : (
-            <div className="flex gap-6">
-              <div className="hidden sm:flex shrink-0 w-12 h-12 bg-(--primary)/10 rounded-full items-center justify-center border border-(--primary)/20">
-                <Bot className="w-6 h-6 text-(--primary)" />
-              </div>
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-700 max-w-4xl">
+              {formattedLines.map((line, index) => (
+                <div key={index} className="flex gap-5 items-start group">
+                  <div className="mt-1.5 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center border border-purple-200 shadow-sm group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                  </div>
+                  {/* Using dangerouslySetInnerHTML because we strictly control the formatting engine above */}
+                  <p 
+                    className="text-[1.15rem] leading-relaxed text-(--text-secondary) font-medium pt-1"
+                    dangerouslySetInnerHTML={{ __html: line }}
+                  ></p>
+                </div>
+              ))}
               
-              <div className="flex-1 space-y-4">
-                {/* Parse the string and render paragraphs to handle AI formatting */}
-                {insights.split('\n').map((paragraph, index) => {
-                  if (!paragraph.trim()) return null; // Skip empty lines
-                  
-                  // Handle bold markdown text (**text**)
-                  const formattedText = paragraph.split(/(\*\*.*?\*\*)/g).map((part, i) => {
-                    if (part.startsWith('**') && part.endsWith('**')) {
-                      return <strong key={i} className="font-bold text-(--text)">{part.slice(2, -2)}</strong>;
-                    }
-                    return part;
-                  });
-
-                  return (
-                    <p key={index} className="text-(--text-secondary) leading-relaxed">
-                      {formattedText}
-                    </p>
-                  );
-                })}
+              {/* Closing actionable statement */}
+              <div className="mt-12 pt-8 border-t border-(--border) flex items-center gap-3 text-purple-600 font-bold text-lg">
+                <ArrowRight className="w-6 h-6" /> Ready to optimize your kitchen?
               </div>
             </div>
           )}
         </div>
-      </div>
 
+      </div>
     </div>
   );
 };
