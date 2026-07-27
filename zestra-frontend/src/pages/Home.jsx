@@ -121,7 +121,7 @@ const Home = () => {
                 to="/login" 
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-transparent hover:bg-(--surface) border-2 border-(--border) text-(--text) text-lg font-bold px-8 py-4 rounded-full transition-all duration-300"
               >
-                Book Demo
+                Sign in
               </Link>
             </div>
 
