@@ -75,6 +75,7 @@ origins = list(
         "http://localhost:5173/",
         "http://localhost:8000",
         "https://localhost:8000",
+        "https://zestra-lac.vercel.app/"
     }
 )
 
