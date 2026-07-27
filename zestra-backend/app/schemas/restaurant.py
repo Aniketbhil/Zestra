@@ -17,6 +17,17 @@ class RestaurantCreate(BaseModel):
         return v
 
 
+class RestaurantUpdate(BaseModel):
+    description: str | None = None
+    address: str | None = None
+    contact_number: str | None = Field(None, max_length=50)
+    business_hours: dict[str, str] | None = None
+
+
+class RestaurantSettingsUpdate(BaseModel):
+    new_order_notifications_enabled: bool | None = None
+
+
 class RestaurantResponse(BaseModel):
     id: UUID
     owner_id: UUID
@@ -24,6 +35,9 @@ class RestaurantResponse(BaseModel):
     slug: str
     description: str | None = None
     address: str | None = None
+    contact_number: str | None = None
+    business_hours: dict[str, str] | None = None
+    new_order_notifications_enabled: bool = True
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

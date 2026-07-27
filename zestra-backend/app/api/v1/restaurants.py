@@ -14,6 +14,8 @@ from app.schemas.restaurant import (
     RestaurantCreate,
     RestaurantQRCodeResponse,
     RestaurantResponse,
+    RestaurantSettingsUpdate,
+    RestaurantUpdate,
 )
 from app.services.restaurant import generate_unique_slug
 
@@ -79,6 +81,81 @@ async def get_my_restaurant(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Restaurant not onboarded yet.",
         )
+
+    return restaurant
+
+
+@router.patch(
+    "/me",
+    response_model=RestaurantResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_my_restaurant(
+    payload: RestaurantUpdate,
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update the authenticated user's Restaurant details.
+
+    Allows updating description, address, contact_number, business_hours.
+    Name and slug are locked and cannot be changed.
+    """
+    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not onboarded yet.",
+        )
+
+    if payload.description is not None:
+        restaurant.description = payload.description
+    if payload.address is not None:
+        restaurant.address = payload.address
+    if payload.contact_number is not None:
+        restaurant.contact_number = payload.contact_number
+    if payload.business_hours is not None:
+        restaurant.business_hours = payload.business_hours
+
+    await db.commit()
+    await db.refresh(restaurant)
+
+    return restaurant
+
+
+@router.patch(
+    "/me/settings",
+    response_model=RestaurantResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_my_restaurant_settings(
+    payload: RestaurantSettingsUpdate,
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update settings for the authenticated user's Restaurant profile.
+
+    Supports toggling `new_order_notifications_enabled`.
+    """
+    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not onboarded yet.",
+        )
+
+    if payload.new_order_notifications_enabled is not None:
+        restaurant.new_order_notifications_enabled = (
+            payload.new_order_notifications_enabled
+        )
+
+    await db.commit()
+    await db.refresh(restaurant)
 
     return restaurant
 

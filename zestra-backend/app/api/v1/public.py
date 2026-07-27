@@ -226,15 +226,16 @@ async def create_public_order(
     res_order = await db.execute(stmt_order)
     created_order = res_order.scalar_one()
 
-    await manager.broadcast(
-        f"orders:{restaurant.slug}",
-        {
-            "type": "new_order",
-            "order": OrderResponse.model_validate(created_order).model_dump(
-                mode="json"
-            ),
-        },
-    )
+    if restaurant.new_order_notifications_enabled:
+        await manager.broadcast(
+            f"orders:{restaurant.slug}",
+            {
+                "type": "new_order",
+                "order": OrderResponse.model_validate(created_order).model_dump(
+                    mode="json"
+                ),
+            },
+        )
 
     pool = getattr(request.app.state, "redis_pool", None) or getattr(
         request.app.state, "arq_pool", None

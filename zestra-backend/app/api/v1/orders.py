@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.models.order import Order, OrderStatus
 from app.models.restaurant import Restaurant
 from app.models.user import User, UserRole
-from app.schemas.order import OrderResponse, OrderStatusUpdate
+from app.schemas.order import CustomerOrderResponse, OrderResponse, OrderStatusUpdate
 from app.services.connection_manager import manager
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -79,6 +79,36 @@ async def list_orders(
     orders = res.scalars().all()
     return orders
 
+
+@router.get(
+    "/me",
+    response_model=list[CustomerOrderResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_my_orders(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.CUSTOMER)),
+):
+    """Fetch all orders placed by the authenticated customer across all restaurants.
+
+    - Customer role only.
+    - Ordered by created_at descending (newest first).
+    - Includes restaurant_name, items, total, and status.
+    """
+    stmt = (
+        select(Order)
+        .where(Order.customer_id == current_user.id)
+        .options(selectinload(Order.restaurant), selectinload(Order.items))
+        .order_by(Order.created_at.desc())
+    )
+    res = await db.execute(stmt)
+    orders = res.scalars().all()
+
+    for order in orders:
+        if order.restaurant:
+            order.restaurant_name = order.restaurant.name
+
+    return orders
 
 
 @router.get(

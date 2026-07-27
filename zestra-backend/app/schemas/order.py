@@ -43,3 +43,20 @@ class OrderResponse(BaseModel):
         return self.id
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerOrderResponse(BaseModel):
+    id: UUID
+    restaurant_id: UUID
+    restaurant_name: str | None = None
+    customer_id: UUID | None = None
+    status: OrderStatus
+    total: Decimal
+    created_at: datetime
+    items: list[OrderItemResponse] = []
+
+    @computed_field
+    def order_id(self) -> UUID:
+        return self.id
+
+    model_config = ConfigDict(from_attributes=True)

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+import hashlib
 from uuid import UUID
 from urllib.parse import urlencode
 
@@ -10,9 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.deps import get_current_user
+from app.core.redis import redis_client
 from app.db.session import get_db
 from app.models.user import AuthProvider, User, UserRole
 from app.schemas.auth import (
+    ChangePasswordRequest,
     RefreshTokenRequest,
     TokenResponse,
     UserLoginRequest,
@@ -22,6 +26,8 @@ from app.schemas.user import UserResponse
 from app.services.security import generate_token_pair, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+_blacklisted_refresh_tokens: set[str] = set()
 
 
 @router.post(
@@ -130,6 +136,25 @@ async def refresh_token(
             detail="Provided token is not a refresh token.",
         )
 
+    # Check if refresh token has been blacklisted / invalidated
+    token_id = (
+        decoded.get("jti")
+        or hashlib.sha256(payload.refresh_token.encode()).hexdigest()
+    )
+    is_blacklisted = False
+    try:
+        val = await redis_client.get(f"blacklist:refresh:{token_id}")
+        if val is not None:
+            is_blacklisted = True
+    except Exception:
+        pass
+
+    if is_blacklisted or token_id in _blacklisted_refresh_tokens:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has been logged out or invalidated.",
+        )
+
     user_id_str = decoded.get("sub")
     if not user_id_str:
         raise HTTPException(
@@ -153,6 +178,57 @@ async def refresh_token(
         )
 
     return generate_token_pair(str(user.id), user.email, user.role.value)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+)
+async def logout(
+    payload: RefreshTokenRequest,
+):
+    """Invalidate a refresh token so it can no longer be used at /auth/refresh.
+
+    Blacklists the refresh token in Redis (and in-memory fallback) for its remaining lifetime.
+    Access tokens expire naturally within their short lifespan.
+    """
+    try:
+        decoded = jwt.decode(
+            payload.refresh_token,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired refresh token.",
+        )
+
+    if decoded.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provided token is not a refresh token.",
+        )
+
+    token_id = (
+        decoded.get("jti")
+        or hashlib.sha256(payload.refresh_token.encode()).hexdigest()
+    )
+    exp = decoded.get("exp")
+    if exp:
+        remaining_ttl = int(exp - datetime.now(timezone.utc).timestamp())
+        ttl = max(remaining_ttl, 60)
+    else:
+        ttl = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
+
+    try:
+        await redis_client.set(f"blacklist:refresh:{token_id}", "true", ex=ttl)
+    except Exception:
+        pass
+
+    _blacklisted_refresh_tokens.add(token_id)
+
+    return {"message": "Successfully logged out."}
 
 
 @router.get(
@@ -275,4 +351,38 @@ async def google_callback(
     tokens = generate_token_pair(str(user.id), user.email, user.role.value)
     redirect_url = f"{settings.FRONTEND_BASE_URL}/oauth/callback#access_token={tokens['access_token']}&refresh_token={tokens['refresh_token']}"
     return RedirectResponse(url=redirect_url)
+
+
+@router.patch("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change password for an authenticated local user.
+
+    - Rejects with 400 if auth_provider != local ("password managed by Google — no local password to change").
+    - Verifies current_password with Argon2.
+    - Validates new_password against complexity rules (min 8 chars, 1 upper, 1 lower, 1 special char).
+    - Hashes and updates password.
+    """
+    if current_user.auth_provider != AuthProvider.LOCAL:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="password managed by Google — no local password to change",
+        )
+
+    if not current_user.hashed_password or not verify_password(
+        payload.current_password, current_user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect current password.",
+        )
+
+    current_user.hashed_password = hash_password(payload.new_password)
+    await db.commit()
+
+    return {"message": "Password changed successfully."}
+
 
