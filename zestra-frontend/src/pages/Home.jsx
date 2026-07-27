@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { QrCode, Sparkles, TrendingUp, Clock, ChevronRight, UtensilsCrossed, CheckCircle2, ArrowRight } from 'lucide-react';
 import useAuthStore from '../store/auth/useAuthStore';
+import companyLogo from '../assets/ComponyLogo.png';
 
 // Custom component for Scroll-Triggered Animations (No external libraries needed!)
 const FadeInSection = ({ children, delay = 0, className = "" }) => {
