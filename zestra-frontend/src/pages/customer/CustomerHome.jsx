@@ -1,29 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, Search, UtensilsCrossed, ArrowRight, Store, CheckCircle2, ChevronLeft } from 'lucide-react';
-
-// MOCK DATA: Since the backend doesn't have a public "GET /restaurants" endpoint yet, 
-// we use this to let customers click and select a restaurant for the hackathon demo.
-const DEMO_RESTAURANTS = [
-  { 
-    id: 1, 
-    name: "S. G. Dhaba", 
-    slug: "s-g-dhaba", 
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop" 
-  },
-  { 
-    id: 2, 
-    name: "The Pizza Oven", 
-    slug: "pizza-oven", 
-    image: "https://images.unsplash.com/photo-1513104890d38-7c0f4fff45f1?w=400&h=300&fit=crop" 
-  },
-  { 
-    id: 3, 
-    name: "Burger Joint", 
-    slug: "burger-joint", 
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop" 
-  }
-];
+import { QrCode, Search, UtensilsCrossed, ArrowRight, Store, CheckCircle2, ChevronLeft, Loader2 } from 'lucide-react';
+import api from '../../services/api';
 
 const CustomerHome = () => {
   const navigate = useNavigate();
@@ -32,6 +10,26 @@ const CustomerHome = () => {
   const [step, setStep] = useState(1);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [orderId, setOrderId] = useState('');
+
+  // Live Backend Data State
+  const [restaurants, setRestaurants] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch all registered restaurants from the backend on mount
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await api.get('/public/restaurants');
+        setRestaurants(response.data);
+      } catch (error) {
+        console.error("Failed to fetch restaurants:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchRestaurants();
+  }, []);
 
   const handleContinue = () => {
     if (selectedRestaurant) setStep(2);
@@ -46,7 +44,7 @@ const CustomerHome = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] py-8 text-center max-w-2xl mx-auto px-4 relative">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] py-8 text-center max-w-3xl mx-auto px-4 relative">
       
       {/* STEP 1: Select Restaurant */}
       {step === 1 && (
@@ -59,31 +57,58 @@ const CustomerHome = () => {
             <p className="text-(--text-secondary) mt-2">Select your restaurant to view the menu or track your order.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-left">
-            {DEMO_RESTAURANTS.map((restaurant) => (
-              <button
-                key={restaurant.id}
-                onClick={() => setSelectedRestaurant(restaurant)}
-                className={`relative rounded-[20px] overflow-hidden border-2 transition-all duration-200 shadow-sm ${
-                  selectedRestaurant?.id === restaurant.id 
-                    ? 'border-(--primary) ring-4 ring-(--primary)/10 scale-[1.02]' 
-                    : 'border-(--border) hover:border-(--primary)/50 bg-(--surface)'
-                }`}
-              >
-                <div className="h-28 w-full bg-gray-200">
-                  <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-3 bg-(--surface)">
-                  <h3 className="font-bold text-(--text) text-sm">{restaurant.name}</h3>
-                </div>
-                {selectedRestaurant?.id === restaurant.id && (
-                  <div className="absolute top-2 right-2 bg-white rounded-full text-(--primary) shadow-md">
-                    <CheckCircle2 className="w-5 h-5" />
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="py-16 flex flex-col items-center justify-center">
+              <Loader2 className="w-10 h-10 text-(--primary) animate-spin mb-4" />
+              <p className="text-(--text-muted) font-medium">Finding nearby restaurants...</p>
+            </div>
+          ) : restaurants.length === 0 ? (
+            /* Empty State */
+            <div className="py-16 text-center border-2 border-dashed border-(--border) rounded-3xl mb-8 bg-(--surface)">
+              <Store className="w-12 h-12 text-(--text-muted) mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-(--text)">No restaurants found</h3>
+              <p className="text-(--text-muted) mt-1">Check back later when new places are added!</p>
+            </div>
+          ) : (
+            /* Real Data Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8 text-left">
+              {restaurants.map((restaurant) => (
+                <button
+                  key={restaurant.id}
+                  onClick={() => setSelectedRestaurant(restaurant)}
+                  className={`relative rounded-[20px] overflow-hidden border-2 transition-all duration-200 shadow-sm ${
+                    selectedRestaurant?.id === restaurant.id 
+                      ? 'border-(--primary) ring-4 ring-(--primary)/10 scale-[1.02]' 
+                      : 'border-(--border) hover:border-(--primary)/50 bg-(--surface)'
+                  }`}
+                >
+                  <div className="h-32 w-full bg-(--surface-secondary) flex items-center justify-center">
+                    {restaurant.image_url ? (
+                      <img src={restaurant.image_url} alt={restaurant.name} className="w-full h-full object-cover" />
+                    ) : (
+                      // Fallback icon if the restaurant hasn't uploaded a photo yet
+                      <div className="flex flex-col items-center text-(--text-muted)">
+                        <UtensilsCrossed className="w-8 h-8 mb-2 opacity-50" />
+                        <span className="text-xs font-medium uppercase tracking-wider">No Image</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </button>
-            ))}
-          </div>
+                  <div className="p-4 bg-(--surface)">
+                    <h3 className="font-bold text-(--text) text-base line-clamp-1">{restaurant.name}</h3>
+                    {restaurant.address && (
+                      <p className="text-xs text-(--text-muted) mt-1 line-clamp-1">{restaurant.address}</p>
+                    )}
+                  </div>
+                  {selectedRestaurant?.id === restaurant.id && (
+                    <div className="absolute top-3 right-3 bg-white rounded-full text-(--primary) shadow-md">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           <button 
             onClick={handleContinue}
@@ -111,7 +136,7 @@ const CustomerHome = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg mx-auto">
-            {/* Direct navigation to View Menu */}
+            {/* Direct navigation to View Menu using real backend Slug */}
             <button 
               onClick={() => navigate(`/menu/${selectedRestaurant?.slug}`)}
               className="bg-(--surface) p-8 rounded-3xl border border-(--border) shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-(--primary)/30 transition-all flex flex-col items-center text-center group"
