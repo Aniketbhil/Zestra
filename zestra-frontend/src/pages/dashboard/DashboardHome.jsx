@@ -10,6 +10,7 @@ import {
   Clock,
   Sparkles,
   Edit3,
+  Award, // <-- Added Award icon for the new stat
 } from "lucide-react";
 import useAuthStore from "../../store/auth/useAuthStore";
 import useRestaurantStore from "../../store/dashboard/useRestaurantStore";
@@ -31,7 +32,7 @@ const DashboardHome = () => {
 
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // SECURITY FIX: Only use the restaurant data if it explicitly belongs to the logged-in user
+  // SECURITY FIX: Prevent stale data from previous logins
   const currentRestaurant = restaurant?.owner_id === user?.id ? restaurant : null;
 
   // Always force a fresh fetch when the user ID changes
@@ -82,6 +83,11 @@ const DashboardHome = () => {
     ["received", "preparing"].includes(o.status),
   ).length;
   const todayRevenue = analyticsData?.total_sales || 0;
+
+  // Get Top Selling Item dynamically from the analytics endpoint
+  const topSellingItem = analyticsData?.top_items?.length > 0 
+    ? analyticsData.top_items[0].name 
+    : "No data yet";
 
   // Get 3 most recent orders
   const recentOrders = orders.slice(0, 3);
@@ -141,16 +147,19 @@ const DashboardHome = () => {
           <h3 className="text-3xl font-bold text-(--text)">{pendingOrders}</h3>
         </div>
 
+        {/* REPLACED STAT: Top Selling Item */}
         <div className="bg-(--surface) p-6 rounded-[20px] border border-(--border) shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-(--text-secondary)">
-              Total Orders
+              Top Selling Item
             </span>
-            <div className="w-8 h-8 rounded-full bg-[#DBEAFE] text-[#3B82F6] flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+              <Award className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-bold text-(--text)">{orders.length}</h3>
+          <h3 className="text-2xl font-bold text-(--text) truncate" title={topSellingItem}>
+            {topSellingItem}
+          </h3>
         </div>
       </div>
 
