@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   TrendingUp,
   ShoppingBag,
@@ -30,28 +30,28 @@ const DashboardHome = () => {
 
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // FIX 1: Only fetch restaurant data if the user is a restaurant owner
+  // Only fetch restaurant data if the user is a restaurant owner
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (user?.role === "restaurant" && !restaurant) {
+      if (user?.role === 'restaurant' && !restaurant) {
         await fetchMyRestaurant();
       }
       setIsInitializing(false);
     };
-
+    
     loadDashboardData();
   }, [restaurant, fetchMyRestaurant, user?.role]);
 
-  // FIX 2: Only fetch analytics and orders if they are a restaurant owner with a profile
+  // Only fetch analytics and orders if they are a restaurant owner with a profile
   useEffect(() => {
-    if (user?.role === "restaurant" && restaurant?.slug) {
+    if (user?.role === 'restaurant' && restaurant?.slug) {
       fetchAnalytics();
       fetchOrders();
     }
   }, [restaurant?.slug, fetchAnalytics, fetchOrders, user?.role]);
 
-  // FIX 3: Instantly render the Customer view if they are a customer
-  if (user?.role === "customer") {
+  // Instantly render the Customer view if they are a customer
+  if (user?.role === 'customer') {
     return <CustomerHome />;
   }
 
@@ -62,9 +62,7 @@ const DashboardHome = () => {
       <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-10 h-10 border-4 border-(--primary) border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-(--text-muted) font-medium">
-            Loading Dashboard...
-          </p>
+          <p className="text-(--text-muted) font-medium">Loading Dashboard...</p>
         </div>
       </div>
     );
@@ -72,28 +70,7 @@ const DashboardHome = () => {
 
   // If the user hasn't created a restaurant profile yet
   if (!restaurant) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center max-w-md mx-auto space-y-6">
-        <div className="w-20 h-20 bg-(--primary)/10 rounded-full flex items-center justify-center">
-          <Store className="w-10 h-10 text-(--primary)" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-(--text)">
-            Welcome to Zestra!
-          </h2>
-          <p className="text-(--text-secondary) mt-2 leading-relaxed">
-            Your account is created, but you need to set up your restaurant
-            profile before you can manage menus and take orders.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/dashboard/onboard")}
-          className="w-full py-3 bg-(--primary) hover:bg-(--primary-hover) text-white rounded-[14px] font-bold shadow-sm shadow-(--primary)/25 transition-colors flex items-center justify-center gap-2"
-        >
-          Set Up Restaurant <ArrowRight className="w-5 h-5" />
-        </button>
-      </div>
-    );
+    return <Navigate to="/dashboard/onboard" replace />;
   }
 
   // Calculate quick stats
