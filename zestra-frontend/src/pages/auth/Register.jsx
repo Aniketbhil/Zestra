@@ -32,7 +32,9 @@ const Register = () => {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = `http://localhost:8000/api/v1/auth/google/login?role=${role}`;
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+    window.location.href = `${apiBaseUrl}/auth/google/login?role=${role}`;
   };
 
   return (

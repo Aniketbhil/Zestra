@@ -42,8 +42,10 @@ const useOrderStore = create((set, get) => ({
   connectToOrderStream: (orderId) => {
     if (get().wsConnection) return;
 
-    // Use Aniket's exact WebSocket path
-    const ws = new WebSocket(`ws://localhost:8000/ws/orders/track/${orderId}`);
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const wsBaseUrl = apiBaseUrl.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '');
+    const ws = new WebSocket(`${wsBaseUrl}/ws/orders/track/${orderId}`);
 
     ws.onopen = () => console.log('Connected to live order stream');
 

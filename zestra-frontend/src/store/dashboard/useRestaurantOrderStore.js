@@ -41,8 +41,10 @@ const useRestaurantOrderStore = create((set, get) => ({
     // Prevent duplicate connections
     if (get().wsConnection) return;
 
-    // Connect using Aniket's exact root WebSocket URL
-    const ws = new WebSocket(`ws://localhost:8000/ws/orders/${slug}`);
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const wsBaseUrl = apiBaseUrl.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '');
+    const ws = new WebSocket(`${wsBaseUrl}/ws/orders/${slug}`);
 
     ws.onopen = () => console.log('Dashboard connected to live order stream');
 
