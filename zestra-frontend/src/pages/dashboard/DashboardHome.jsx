@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  QrCode, 
-  Plus, 
-  ArrowRight,
-  Store,
-  Clock
-} from 'lucide-react';
+import { TrendingUp, ShoppingBag, QrCode, Plus, ArrowRight, Store, Clock, Sparkles } from 'lucide-react';
 import useAuthStore from '../../store/auth/useAuthStore';
 import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 import useAnalyticsStore from '../../store/dashboard/useAnalyticsStore';
@@ -136,6 +128,7 @@ const DashboardHome = () => {
         <div className="bg-(--surface) rounded-[20px] border border-(--border) shadow-sm p-6">
           <h2 className="text-lg font-bold text-(--text) mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* 1. Add Menu Item */}
             <button 
               onClick={() => navigate('/dashboard/menu')}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
@@ -149,6 +142,7 @@ const DashboardHome = () => {
               </div>
             </button>
 
+            {/* 2. Get QR Code */}
             <button 
               onClick={() => navigate('/dashboard/qr')}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
@@ -162,16 +156,31 @@ const DashboardHome = () => {
               </div>
             </button>
 
+            {/* 3. Manage Live Orders (Removed sm:col-span-2 so it fits cleanly) */}
             <button 
               onClick={() => navigate('/dashboard/orders')}
-              className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left sm:col-span-2"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
             >
               <div className="bg-[#DBEAFE] p-2 rounded-lg text-[#3B82F6]">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
                 <div className="font-bold text-(--text) text-sm">Manage Live Orders</div>
-                <div className="text-xs text-(--text-muted)">Jump to the kitchen display board</div>
+                <div className="text-xs text-(--text-muted)">Jump to kitchen display</div>
+              </div>
+            </button>
+
+            {/* 4. NEW: AI Assistant Button */}
+            <button 
+              onClick={() => navigate('/dashboard/ai')}
+              className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
+            >
+              <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-(--text) text-sm">AI Insights</div>
+                <div className="text-xs text-(--text-muted)">Ask Gemini to analyze sales</div>
               </div>
             </button>
           </div>
