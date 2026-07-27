@@ -47,12 +47,19 @@ const Home = () => {
       {/* Navigation Bar */}
       <nav className="w-full bg-(--surface)/80 backdrop-blur-md border-b border-(--border) sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-(--primary) flex items-center justify-center text-white font-bold shadow-sm shadow-(--primary)/20">
-              Z.
+          
+          {/* UPDATED: Brand Image & Text */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-sm border border-(--border) flex items-center justify-center">
+              <img 
+                src={companyLogo} 
+                alt="Zestra Brand" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-xl font-bold text-(--text) tracking-tight">Zestra</span>
+            <span className="text-xl font-extrabold text-(--text) tracking-tight pt-0.5">Zestra</span>
           </div>
+          
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <Link 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import useAuthStore from "./store/auth/useAuthStore";
+import useThemeStore from "./store/theme/useThemeStore";
 
 // Pages & Components
 import Home from "./pages/Home";
@@ -27,8 +28,17 @@ import OrderTracking from "./pages/public/OrderTracking";
 
 function App() {
   const { fetchUser, isAuthenticated } = useAuthStore();
+  const { theme } = useThemeStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+  
   useEffect(() => {
     const initializeAuth = async () => {
       if (localStorage.getItem("access_token")) {
