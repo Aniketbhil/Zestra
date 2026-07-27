@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router-dom";
 import {
   TrendingUp,
   ShoppingBag,
@@ -9,6 +9,7 @@ import {
   Store,
   Clock,
   Sparkles,
+  Edit3,
 } from "lucide-react";
 import useAuthStore from "../../store/auth/useAuthStore";
 import useRestaurantStore from "../../store/dashboard/useRestaurantStore";
@@ -30,25 +31,28 @@ const DashboardHome = () => {
 
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Only fetch restaurant data if the user is a restaurant owner
+  // SECURITY FIX: Only use the restaurant data if it explicitly belongs to the logged-in user
+  const currentRestaurant = restaurant?.owner_id === user?.id ? restaurant : null;
+
+  // Always force a fresh fetch when the user ID changes
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (user?.role === 'restaurant' && !restaurant) {
+      if (user?.role === 'restaurant') {
         await fetchMyRestaurant();
       }
       setIsInitializing(false);
     };
     
     loadDashboardData();
-  }, [restaurant, fetchMyRestaurant, user?.role]);
+  }, [user?.id, fetchMyRestaurant, user?.role]);
 
-  // Only fetch analytics and orders if they are a restaurant owner with a profile
+  // Only fetch analytics and orders if the CURRENT verified restaurant exists
   useEffect(() => {
-    if (user?.role === 'restaurant' && restaurant?.slug) {
+    if (user?.role === 'restaurant' && currentRestaurant?.slug) {
       fetchAnalytics();
       fetchOrders();
     }
-  }, [restaurant?.slug, fetchAnalytics, fetchOrders, user?.role]);
+  }, [currentRestaurant?.slug, fetchAnalytics, fetchOrders, user?.role]);
 
   // Instantly render the Customer view if they are a customer
   if (user?.role === 'customer') {
@@ -68,8 +72,8 @@ const DashboardHome = () => {
     );
   }
 
-  // If the user hasn't created a restaurant profile yet
-  if (!restaurant) {
+  // If the user hasn't created a restaurant profile yet (or if the data is stale)
+  if (!currentRestaurant) {
     return <Navigate to="/dashboard/onboard" replace />;
   }
 
@@ -84,14 +88,29 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-8 pb-8">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-(--text)">
-          Welcome back, {restaurant.name}
-        </h1>
-        <p className="text-(--text-secondary) text-sm mt-1">
-          Here is what is happening at your restaurant today.
-        </p>
+      
+      {/* Welcome Banner with Edit Shortcut */}
+      <div className="bg-(--surface) border border-(--border) rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-(--primary)/10 text-(--primary) rounded-2xl flex items-center justify-center shrink-0">
+            <Store className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-(--text)">
+              Welcome back, {currentRestaurant.name}
+            </h1>
+            <p className="text-(--text-secondary) text-sm mt-1 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live & Accepting Orders
+            </p>
+          </div>
+        </div>
+        <Link 
+          to="/dashboard/settings"
+          className="w-full sm:w-auto px-5 py-2.5 bg-(--surface-secondary) hover:bg-(--border) border border-(--border) text-(--text) font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+        >
+          <Edit3 className="w-4 h-4" /> Edit Details
+        </Link>
       </div>
 
       {/* Quick Stats Row */}
@@ -142,7 +161,6 @@ const DashboardHome = () => {
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* 1. Add Menu Item */}
             <button
               onClick={() => navigate("/dashboard/menu")}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
@@ -160,7 +178,6 @@ const DashboardHome = () => {
               </div>
             </button>
 
-            {/* 2. Get QR Code */}
             <button
               onClick={() => navigate("/dashboard/qr")}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
@@ -178,7 +195,6 @@ const DashboardHome = () => {
               </div>
             </button>
 
-            {/* 3. Manage Live Orders (Removed sm:col-span-2 so it fits cleanly) */}
             <button
               onClick={() => navigate("/dashboard/orders")}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"
@@ -196,7 +212,6 @@ const DashboardHome = () => {
               </div>
             </button>
 
-            {/* 4. NEW: AI Assistant Button */}
             <button
               onClick={() => navigate("/dashboard/ai")}
               className="flex items-center gap-3 p-4 rounded-2xl border border-(--border) bg-(--background) hover:bg-(--surface-secondary) transition-colors text-left"

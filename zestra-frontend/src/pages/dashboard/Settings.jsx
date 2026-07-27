@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Shield, User, Lock, Store, MapPin, Phone, Bell, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Mail, Shield, User, Lock, Store, MapPin, Phone, Loader2, Image as ImageIcon } from 'lucide-react';
 import useAuthStore from '../../store/auth/useAuthStore';
 import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 import api from '../../services/api';
@@ -8,6 +8,9 @@ import toast from 'react-hot-toast';
 const Settings = () => {
   const { user, fetchUser } = useAuthStore();
   const { restaurant, fetchMyRestaurant } = useRestaurantStore();
+
+  // SECURITY FIX: Prevent stale data from previous logins
+  const currentRestaurant = restaurant?.owner_id === user?.id ? restaurant : null;
 
   // --- 1. User Profile State ---
   const [fullName, setFullName] = useState('');
@@ -23,20 +26,32 @@ const Settings = () => {
   });
   const [isRestSaving, setIsRestSaving] = useState(false);
 
-  // Sync initial state when data loads
+  // Always fetch fresh restaurant data when user ID changes
+  useEffect(() => {
+    if (user?.role === 'restaurant') {
+      fetchMyRestaurant();
+    }
+  }, [user?.id, fetchMyRestaurant]);
+
+  // Sync state safely
   useEffect(() => {
     if (user) {
       setFullName(user.full_name || '');
     }
-    if (restaurant) {
+    
+    // Only load restaurant details if they belong to the CURRENT user
+    if (currentRestaurant) {
       setRestDetails({
-        description: restaurant.description || '',
-        address: restaurant.address || '',
-        contact_number: restaurant.contact_number || '',
-        image_url: restaurant.image_url || ''
+        description: currentRestaurant.description || '',
+        address: currentRestaurant.address || '',
+        contact_number: currentRestaurant.contact_number || '',
+        image_url: currentRestaurant.image_url || ''
       });
+    } else {
+      // Clear out the form if there is no valid restaurant for this user
+      setRestDetails({ description: '', address: '', contact_number: '', image_url: '' });
     }
-  }, [user, restaurant]);
+  }, [user, currentRestaurant]);
 
   // --- Handlers ---
 
@@ -45,7 +60,7 @@ const Settings = () => {
     setIsProfileSaving(true);
     try {
       await api.patch('/users/me/profile', { full_name: fullName });
-      await fetchUser(); // Refresh global user state
+      await fetchUser();
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to update profile");
@@ -84,7 +99,7 @@ const Settings = () => {
         contact_number: restDetails.contact_number,
         image_url: restDetails.image_url
       });
-      await fetchMyRestaurant(); // Refresh global restaurant state
+      await fetchMyRestaurant();
       toast.success("Restaurant details updated!");
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to update restaurant");
@@ -96,7 +111,6 @@ const Settings = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-(--text)">Account Settings</h1>
         <p className="text-(--text-secondary) text-sm mt-1">Manage your Zestra profile and preferences</p>
@@ -161,7 +175,7 @@ const Settings = () => {
         </form>
       </section>
 
-      {/* SECTION 2: Security (Only for local auth users) */}
+      {/* SECTION 2: Security */}
       {user?.auth_provider === 'local' && (
         <section className="bg-(--surface) rounded-3xl border border-(--border) shadow-sm overflow-hidden p-6 sm:p-8">
           <h3 className="text-lg font-bold text-(--text) flex items-center gap-2 mb-6">
@@ -215,7 +229,7 @@ const Settings = () => {
         </section>
       )}
 
-      {/* SECTION 3: Restaurant Profile (Only for Restaurant role) */}
+      {/* SECTION 3: Restaurant Profile */}
       {user?.role === 'restaurant' && (
         <section className="bg-(--surface) rounded-3xl border border-(--border) shadow-sm overflow-hidden p-6 sm:p-8">
           <div className="flex items-center justify-between mb-6">
@@ -227,8 +241,6 @@ const Settings = () => {
           
           <form onSubmit={handleUpdateRestaurant} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Description */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-(--text-secondary) mb-2">Description</label>
                 <textarea 
@@ -240,7 +252,6 @@ const Settings = () => {
                 />
               </div>
 
-              {/* Address */}
               <div>
                 <label className="block text-sm font-medium text-(--text-secondary) mb-2">Address</label>
                 <div className="relative">
@@ -257,7 +268,6 @@ const Settings = () => {
                 </div>
               </div>
 
-              {/* Contact Number */}
               <div>
                 <label className="block text-sm font-medium text-(--text-secondary) mb-2">Contact Number</label>
                 <div className="relative">
@@ -274,7 +284,6 @@ const Settings = () => {
                 </div>
               </div>
 
-              {/* Image URL */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-(--text-secondary) mb-2">Cover Image URL</label>
                 <div className="relative">
@@ -290,7 +299,6 @@ const Settings = () => {
                   />
                 </div>
               </div>
-
             </div>
 
             <div className="flex justify-end pt-2 border-t border-(--border)">
@@ -305,7 +313,6 @@ const Settings = () => {
           </form>
         </section>
       )}
-
     </div>
   );
 };
