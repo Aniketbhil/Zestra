@@ -68,55 +68,65 @@ const Inventory = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-sans pb-8">
       
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 px-1">
         <div>
-          <h1 className="text-2xl font-bold text-(--text)">Inventory Tracking</h1>
-          <p className="text-(--text-secondary) text-sm mt-1">Monitor your ingredients and stock levels</p>
+          <h1 className="text-3xl font-black text-(--text) tracking-tight">Inventory Tracking</h1>
+          <p className="text-(--text-secondary) font-medium text-sm mt-1.5">Monitor your ingredients and stock levels</p>
         </div>
         
-        <div className="flex w-full sm:w-auto items-center gap-3">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
+        <div className="flex w-full sm:w-auto items-center gap-4">
+          <div className="relative flex-1 sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
             <input 
               type="text" 
               placeholder="Search inventory..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-(--surface) border border-(--border) rounded-[14px] text-sm focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)"
+              className="w-full pl-11 pr-4 py-3 bg-(--surface) border-2 border-(--border)/60 rounded-2xl text-sm font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/70"
             />
           </div>
           <button 
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-(--primary) hover:bg-(--primary-hover) text-white rounded-[14px] font-semibold text-sm transition-colors whitespace-nowrap shadow-sm shadow-(--primary)/25"
+            className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-[0_8px_20px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_25px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:scale-95 whitespace-nowrap border border-emerald-400/50"
           >
             <Plus className="w-4 h-4" /> Add Item
           </button>
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <div className="bg-(--surface) rounded-[20px] border border-(--border) overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      {/* Inventory Table - Premium Bento Wrapper */}
+      <div className="bg-(--surface) rounded-4xl border border-(--border)/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-(--border) scrollbar-track-transparent">
+          <table className="w-full text-left border-collapse min-w-175">
             <thead>
-              <tr className="bg-(--surface-secondary) border-b border-(--border)">
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Ingredient Name</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Current Stock</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider text-right">Actions</th>
+              <tr className="bg-(--surface-secondary)/40 border-b border-(--border)/60">
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Ingredient Name</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Current Stock</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Status</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-(--border)">
+            <tbody className="divide-y divide-(--border)/50">
               {isLoading && inventoryItems.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-(--text-muted)">Loading inventory...</td>
+                  <td colSpan="4" className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center text-(--text-muted)">
+                      <div className="w-10 h-10 border-4 border-(--primary) border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_var(--primary)]"></div>
+                      <span className="font-bold tracking-tight">Loading inventory...</span>
+                    </div>
+                  </td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-(--text-muted)">No items found. Track your first ingredient!</td>
+                  <td colSpan="4" className="px-6 py-16 text-center">
+                     <div className="flex flex-col items-center justify-center text-(--text-muted) opacity-60">
+                        <Package className="w-12 h-12 mb-3 opacity-30" />
+                        <span className="font-bold tracking-tight">No items found. Track your first ingredient!</span>
+                     </div>
+                  </td>
                 </tr>
               ) : (
                 filteredItems.map(item => {
@@ -125,40 +135,44 @@ const Inventory = () => {
                   const isLowStock = qty <= threshold;
 
                   return (
-                    <tr key={item.id} className="hover:bg-(--surface-secondary)/50 transition-colors">
-                      <td className="px-6 py-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-(--surface-secondary) border border-(--border) flex items-center justify-center text-(--text-muted)">
-                          <Package className="w-5 h-5" />
+                    <tr key={item.id} className="hover:bg-(--surface-secondary)/40 transition-colors group">
+                      <td className="px-6 py-4 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-[14px] bg-(--surface-secondary) border border-(--border)/60 flex items-center justify-center text-(--text-muted) shadow-sm group-hover:scale-105 transition-transform">
+                          <Package className="w-5 h-5 opacity-70" />
                         </div>
-                        <span className="font-semibold text-(--text)">{item.name}</span>
+                        <span className="font-black text-(--text) tracking-tight text-base">{item.name}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-bold text-(--text)">{qty}</span> <span className="text-(--text-secondary) text-sm">{item.unit}</span>
+                        <span className="font-black text-lg text-(--text)">{qty}</span> <span className="text-(--text-secondary) font-bold text-sm ml-1">{item.unit}</span>
                       </td>
                       <td className="px-6 py-4">
                         {isLowStock ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#F59E0B] border border-[#F59E0B]/20">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-200 shadow-sm">
                             <AlertTriangle className="w-3.5 h-3.5" /> Low Stock
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#DCFCE7] text-[#22C55E]">
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
                             In Stock
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button 
-                          onClick={() => handleOpenEdit(item)}
-                          className="p-2 text-(--text-muted) hover:text-(--primary) hover:bg-(--primary)/10 rounded-lg transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => deleteInventoryItem(item.id)}
-                          className="p-2 text-(--text-muted) hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => handleOpenEdit(item)}
+                            className="p-2.5 text-(--text-secondary) hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all active:scale-95"
+                            title="Edit Item"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => deleteInventoryItem(item.id)}
+                            className="p-2.5 text-(--text-secondary) hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all active:scale-95"
+                            title="Delete Item"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -169,43 +183,44 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Add / Edit Modal - Floating Glassmorphism */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-(--surface) w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-(--border) flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-(--text)">{editingItem ? 'Update Stock' : 'Add Ingredient'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-(--text-muted) hover:text-(--text) transition-colors">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-(--surface) w-full max-w-lg rounded-4xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-(--border)/60 max-h-[90vh]">
+            
+            <div className="px-8 py-6 border-b border-(--border)/60 flex items-center justify-between shrink-0 bg-(--surface-secondary)/30">
+              <h2 className="text-xl font-black text-(--text) tracking-tight">{editingItem ? 'Update Stock' : 'Add Ingredient'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-(--background) border border-(--border) text-(--text-muted) hover:text-(--text) transition-colors active:scale-95">
+                <X className="w-4 h-4" />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto scrollbar-thin">
               <div>
-                <label className="block text-sm font-medium text-(--text-secondary) mb-1">Ingredient Name</label>
-                <input required type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="e.g. Tomato Paste" />
+                <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Ingredient Name</label>
+                <input required type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="e.g. Tomato Paste" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-(--text-secondary) mb-1">Current Quantity</label>
-                  <input required type="number" step="0.01" min="0" name="quantity" value={formData.quantity} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="0.00" />
+                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Current Quantity</label>
+                  <input required type="number" step="0.01" min="0" name="quantity" value={formData.quantity} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-black text-lg focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--primary) transition-all placeholder:text-(--text-muted)/50 placeholder:font-medium placeholder:text-base" placeholder="0.00" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-(--text-secondary) mb-1">Unit</label>
-                  <input required type="text" name="unit" value={formData.unit} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="e.g. kg, liters, pcs" />
+                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Unit</label>
+                  <input required type="text" name="unit" value={formData.unit} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="e.g. kg, liters, pcs" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-(--text-secondary) mb-1">Low Stock Warning Threshold</label>
-                <input required type="number" step="0.01" min="0" name="low_stock_threshold" value={formData.low_stock_threshold} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="Alert me when stock falls below..." />
+                <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Low Stock Threshold</label>
+                <input required type="number" step="0.01" min="0" name="low_stock_threshold" value={formData.low_stock_threshold} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-black text-lg focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-amber-600 transition-all placeholder:text-(--text-muted)/50 placeholder:font-medium placeholder:text-base" placeholder="Alert below..." />
               </div>
 
-              <div className="pt-4 mt-6 border-t border-(--border) flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-[14px] font-semibold text-(--text-secondary) hover:bg-(--surface-secondary) transition-colors">Cancel</button>
-                <button type="submit" disabled={isLoading} className="px-5 py-2.5 rounded-[14px] font-semibold text-white bg-(--primary) hover:bg-(--primary-hover) shadow-sm shadow-(--primary)/25 transition-colors disabled:opacity-70">
-                  {isLoading ? 'Saving...' : (editingItem ? 'Update Stock' : 'Save Item')}
+              <div className="pt-6 mt-8 border-t border-(--border)/60 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3.5 rounded-2xl font-black text-(--text-secondary) bg-(--background) border border-(--border) hover:bg-(--surface-secondary) transition-colors active:scale-95">Cancel</button>
+                <button type="submit" disabled={isLoading} className="px-8 py-3.5 rounded-2xl font-black text-white bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 shadow-[0_8px_20px_rgba(16,185,129,0.2)] transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center min-w-35">
+                  {isLoading ? <span className="animate-pulse">Saving...</span> : (editingItem ? 'Update Stock' : 'Save Item')}
                 </button>
               </div>
             </form>
