@@ -76,95 +76,111 @@ const Menu = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-sans pb-8">
       
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 px-1">
         <div>
-          <h1 className="text-2xl font-bold text-(--text)">Menu Management</h1>
-          <p className="text-(--text-secondary) text-sm mt-1">Manage your restaurant's digital menu ({menuItems.length} items)</p>
+          <h1 className="text-3xl font-black text-(--text) tracking-tight">Menu Management</h1>
+          <p className="text-(--text-secondary) font-medium text-sm mt-1.5">Manage your restaurant's digital menu ({menuItems.length} items)</p>
         </div>
         
-        <div className="flex w-full sm:w-auto items-center gap-3">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
+        <div className="flex w-full sm:w-auto items-center gap-4">
+          <div className="relative flex-1 sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
             <input 
               type="text" 
-              placeholder="Search items..." 
+              placeholder="Search items or categories..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-(--surface) border border-(--border) rounded-[14px] text-sm focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)"
+              className="w-full pl-11 pr-4 py-3 bg-(--surface) border-2 border-(--border)/60 rounded-2xl text-sm font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/70"
             />
           </div>
           <button 
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-(--primary) hover:bg-(--primary-hover) text-white rounded-[14px] font-semibold text-sm transition-colors whitespace-nowrap shadow-sm shadow-(--primary)/25"
+            className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-[0_8px_20px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_25px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:scale-95 whitespace-nowrap border border-emerald-400/50"
           >
             <Plus className="w-4 h-4" /> Add Item
           </button>
         </div>
       </div>
 
-      {/* Menu Table */}
-      <div className="bg-(--surface) rounded-[20px] border border-(--border) overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      {/* Menu Table - Premium Bento Wrapper */}
+      <div className="bg-(--surface) rounded-4xl border border-(--border)/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-(--border) scrollbar-track-transparent">
+          <table className="w-full text-left border-collapse min-w-175">
             <thead>
-              <tr className="bg-(--surface-secondary) border-b border-(--border)">
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Item Name</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Price</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-(--text-secondary) uppercase tracking-wider text-right">Actions</th>
+              <tr className="bg-(--surface-secondary)/40 border-b border-(--border)/60">
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Item Name</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Category</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Price</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest">Status</th>
+                <th className="px-6 py-5 text-xs font-black text-(--text-secondary) uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-(--border)">
+            <tbody className="divide-y divide-(--border)/50">
               {isLoading && menuItems.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-(--text-muted)">Loading menu items...</td>
+                  <td colSpan="5" className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center text-(--text-muted)">
+                      <div className="w-10 h-10 border-4 border-(--primary) border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_var(--primary)]"></div>
+                      <span className="font-bold tracking-tight">Loading menu items...</span>
+                    </div>
+                  </td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-(--text-muted)">No items found. Add your first dish!</td>
+                  <td colSpan="5" className="px-6 py-16 text-center">
+                     <div className="flex flex-col items-center justify-center text-(--text-muted) opacity-60">
+                        <Search className="w-12 h-12 mb-3 opacity-30" />
+                        <span className="font-bold tracking-tight">No items found.</span>
+                     </div>
+                  </td>
                 </tr>
               ) : (
                 filteredItems.map(item => (
-                  <tr key={item.id} className="hover:bg-(--surface-secondary)/50 transition-colors">
-                    <td className="px-6 py-4 flex items-center gap-3">
+                  <tr key={item.id} className="hover:bg-(--surface-secondary)/40 transition-colors group">
+                    <td className="px-6 py-4 flex items-center gap-4">
                       {item.image_url ? (
-                        <img src={item.image_url} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-(--border)" />
+                        <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-[14px] object-cover border border-(--border)/60 shadow-sm group-hover:scale-105 transition-transform" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-(--surface-secondary) border border-(--border) flex items-center justify-center text-(--text-muted)">
-                          <ImageIcon className="w-5 h-5" />
+                        <div className="w-12 h-12 rounded-[14px] bg-(--surface-secondary) border border-(--border)/60 flex items-center justify-center text-(--text-muted) shadow-sm">
+                          <ImageIcon className="w-5 h-5 opacity-50" />
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-(--text)">{item.name}</div>
-                        <div className="text-xs text-(--text-muted) truncate max-w-50">{item.description}</div>
+                        <div className="font-black text-(--text) tracking-tight text-base">{item.name}</div>
+                        <div className="text-xs font-medium text-(--text-muted) truncate max-w-50 mt-0.5">{item.description || 'No description added'}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-(--text-secondary)">{item.category}</td>
-                    <td className="px-6 py-4 font-semibold text-(--primary)">${parseFloat(item.price).toFixed(2)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.is_available ? 'bg-[#DCFCE7] text-[#22C55E]' : 'bg-[#FEE2E2] text-[#EF4444]'}`}>
-                        {item.is_available ? 'Available' : 'Unavailable'}
+                    <td className="px-6 py-4 text-sm font-bold text-(--text-secondary)">
+                      <span className="bg-(--background) border border-(--border)/60 px-3 py-1.5 rounded-lg shadow-sm">
+                        {item.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button 
-                        onClick={() => handleOpenEdit(item)}
-                        className="p-2 text-(--text-muted) hover:text-(--primary) hover:bg-(--primary)/10 rounded-lg transition-colors"
-                        title="Edit Item"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => deleteMenuItem(item.id)}
-                        className="p-2 text-(--text-muted) hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-                        title="Delete Item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <td className="px-6 py-4 font-black text-lg text-(--text)">${parseFloat(item.price).toFixed(2)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm border ${item.is_available ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                        {item.is_available ? 'Available' : 'Sold Out'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => handleOpenEdit(item)}
+                          className="p-2.5 text-(--text-secondary) hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all active:scale-95"
+                          title="Edit Item"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => deleteMenuItem(item.id)}
+                          className="p-2.5 text-(--text-secondary) hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all active:scale-95"
+                          title="Delete Item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -174,53 +190,54 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Add / Edit Modal - Floating Glassmorphism */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-(--surface) w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-(--border) flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-(--text)">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-(--text-muted) hover:text-(--text) transition-colors">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-(--surface) w-full max-w-lg rounded-4xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-(--border)/60 max-h-[90vh]">
+            
+            <div className="px-8 py-6 border-b border-(--border)/60 flex items-center justify-between shrink-0 bg-(--surface-secondary)/30">
+              <h2 className="text-xl font-black text-(--text) tracking-tight">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-(--background) border border-(--border) text-(--text-muted) hover:text-(--text) transition-colors active:scale-95">
+                <X className="w-4 h-4" />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+            <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto scrollbar-thin">
               <div>
-                <label className="block text-sm font-medium text-(--text-secondary) mb-1">Item Name</label>
-                <input required type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="e.g. Classic Cheeseburger" />
+                <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Item Name</label>
+                <input required type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="e.g. Classic Cheeseburger" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-(--text-secondary) mb-1">Category</label>
-                  <input required type="text" name="category" value={formData.category} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="e.g. Mains" />
+                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Category</label>
+                  <input required type="text" name="category" value={formData.category} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="e.g. Mains" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-(--text-secondary) mb-1">Price ($)</label>
-                  <input required type="number" step="0.01" min="0" name="price" value={formData.price} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="0.00" />
+                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Price ($)</label>
+                  <input required type="number" step="0.01" min="0" name="price" value={formData.price} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-black text-lg focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--primary) transition-all placeholder:text-(--text-muted)/50 placeholder:font-medium placeholder:text-base" placeholder="0.00" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-(--text-secondary) mb-1">Image URL (Optional)</label>
-                <input type="url" name="image_url" value={formData.image_url} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text)" placeholder="https://example.com/image.jpg" />
+                <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Image URL (Optional)</label>
+                <input type="url" name="image_url" value={formData.image_url} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="https://example.com/image.jpg" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-(--text-secondary) mb-1">Description (Optional)</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="2" className="w-full px-4 py-2.5 bg-(--background) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 text-(--text) resize-none" placeholder="Ingredients and details..." />
+                <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Description (Optional)</label>
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) resize-none transition-all placeholder:text-(--text-muted)/50" placeholder="Ingredients and delicious details..." />
               </div>
 
-              <div className="flex items-center mt-2">
-                <input type="checkbox" id="is_available" name="is_available" checked={formData.is_available} onChange={handleInputChange} className="w-4 h-4 text-(--primary) border-(--border) rounded focus:ring-(--primary)" />
-                <label htmlFor="is_available" className="ml-2 block text-sm text-(--text-secondary)">Available for order</label>
+              <div className="flex items-center mt-2 bg-(--background) p-4 border border-(--border)/60 rounded-2xl">
+                <input type="checkbox" id="is_available" name="is_available" checked={formData.is_available} onChange={handleInputChange} className="w-5 h-5 text-(--primary) bg-(--surface) border-2 border-(--border) rounded-md focus:ring-(--primary) focus:ring-offset-0 cursor-pointer transition-colors" />
+                <label htmlFor="is_available" className="ml-3 block text-sm font-bold text-(--text) cursor-pointer select-none">Available for order</label>
               </div>
 
-              <div className="pt-4 mt-6 border-t border-(--border) flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-[14px] font-semibold text-(--text-secondary) hover:bg-(--surface-secondary) transition-colors">Cancel</button>
-                <button type="submit" disabled={isLoading} className="px-5 py-2.5 rounded-[14px] font-semibold text-white bg-(--primary) hover:bg-(--primary-hover) shadow-sm shadow-(--primary)/25 transition-colors disabled:opacity-70">
-                  {isLoading ? 'Saving...' : (editingItem ? 'Update Item' : 'Save Item')}
+              <div className="pt-6 mt-8 border-t border-(--border)/60 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3.5 rounded-2xl font-black text-(--text-secondary) bg-(--background) border border-(--border) hover:bg-(--surface-secondary) transition-colors active:scale-95">Cancel</button>
+                <button type="submit" disabled={isLoading} className="px-8 py-3.5 rounded-2xl font-black text-white bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 shadow-[0_8px_20px_rgba(16,185,129,0.2)] transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center min-w-35">
+                  {isLoading ? <span className="animate-pulse">Saving...</span> : (editingItem ? 'Update Item' : 'Save Item')}
                 </button>
               </div>
             </form>
