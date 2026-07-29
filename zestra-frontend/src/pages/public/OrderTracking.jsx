@@ -32,33 +32,33 @@ const OrderTracking = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-(--background) flex flex-col items-center justify-center print:hidden">
-        <div className="w-12 h-12 border-4 border-(--primary) border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-(--text-muted) font-medium">Fetching live order status...</p>
+        <div className="w-16 h-16 border-4 border-(--primary) border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_var(--primary)]"></div>
+        <p className="text-(--text) font-bold tracking-tight text-lg">Fetching live status...</p>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-(--background) flex flex-col items-center justify-center p-4 text-center print:hidden">
-        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8" />
+      <div className="min-h-screen bg-(--background) flex flex-col items-center justify-center p-6 text-center print:hidden">
+        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-red-100">
+          <AlertCircle className="w-10 h-10" />
         </div>
-        <h1 className="text-2xl font-bold text-(--text) mb-2">Order Not Found</h1>
-        <p className="text-(--text-secondary) mb-6">We couldn't retrieve an order with ID: <span className="font-mono font-bold text-(--text)">{orderId}</span></p>
-        <Link to="/dashboard" className="px-6 py-3 bg-(--primary) text-white rounded-full font-bold shadow-md">Go Back</Link>
+        <h1 className="text-3xl font-black text-(--text) mb-3 tracking-tight">Order Not Found</h1>
+        <p className="text-(--text-secondary) font-medium mb-8 max-w-sm">We couldn't retrieve an order with ID: <br/><span className="font-mono font-black text-(--text) bg-(--surface) px-2 py-1 rounded-md mt-2 inline-block border border-(--border)">{orderId}</span></p>
+        <Link to="/dashboard" className="px-8 py-3.5 bg-(--primary) hover:bg-(--primary-hover) active:scale-95 transition-all text-white rounded-xl font-bold shadow-md">Return Home</Link>
       </div>
     );
   }
 
-  // UPDATED: Workflow stages mapped perfectly to your new payment flow
+  // Workflow stages mapped perfectly to your new payment flow
   const stages = [
     {
       key: 'received',
       title: 'Awaiting Payment',
       description: 'Please proceed to the counter to pay for your order.',
       icon: Banknote,
-      activeColor: 'text-blue-500',
+      activeColor: 'text-blue-600',
       activeBg: 'bg-blue-100',
       borderColor: 'border-blue-500'
     },
@@ -67,7 +67,7 @@ const OrderTracking = () => {
       title: 'Payment Done & Preparing',
       description: 'Payment confirmed! The kitchen is cooking your items.',
       icon: ChefHat,
-      activeColor: 'text-amber-500',
+      activeColor: 'text-amber-600',
       activeBg: 'bg-amber-100',
       borderColor: 'border-amber-500'
     },
@@ -76,7 +76,7 @@ const OrderTracking = () => {
       title: 'Ready to Serve',
       description: 'Your food is cooked and ready at the counter.',
       icon: Utensils,
-      activeColor: 'text-emerald-500',
+      activeColor: 'text-emerald-600',
       activeBg: 'bg-emerald-100',
       borderColor: 'border-emerald-500'
     },
@@ -85,7 +85,7 @@ const OrderTracking = () => {
       title: 'Served',
       description: 'Order complete. Enjoy your meal!',
       icon: CheckCircle2,
-      activeColor: 'text-purple-500',
+      activeColor: 'text-purple-600',
       activeBg: 'bg-purple-100',
       borderColor: 'border-purple-500'
     }
@@ -112,83 +112,98 @@ const OrderTracking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-(--background) pb-12">
+    <div className="min-h-screen bg-(--background) pb-12 font-sans selection:bg-(--primary) selection:text-white">
       
       {/* SCREEN UI VIEW (Hidden when printing PDF) */}
       <div className="print:hidden">
         
-        <header className="bg-(--surface) pt-6 pb-4 px-4 shadow-sm sticky top-0 z-20 border-b border-(--border) flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/dashboard" className="p-2 bg-(--surface-secondary) hover:bg-(--border) rounded-full text-(--text) transition-colors">
+        {/* Glassmorphism Header */}
+        <header className="bg-(--background)/80 backdrop-blur-xl pt-6 pb-4 px-4 sm:px-6 shadow-sm sticky top-0 z-40 border-b border-(--border)/50 flex items-center justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link to="/dashboard" className="w-10 h-10 bg-(--surface) hover:bg-(--surface-secondary) border border-(--border) rounded-xl flex items-center justify-center text-(--text) transition-colors active:scale-95 shadow-sm">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-(--text)">Live Order Tracker</h1>
-              <p className="text-xs text-(--text-muted) font-mono">ID: {order.id.split('-')[0].toUpperCase()}</p>
+              <h1 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Live Tracker</h1>
+              <p className="text-xs font-bold text-(--text-muted) font-mono mt-0.5">ID: {order.id.split('-')[0].toUpperCase()}</p>
             </div>
           </div>
-          <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${currentStage.activeBg} ${currentStage.activeColor}`}>
-            {currentStage.title}
+          <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border shadow-sm ${currentStage.activeBg} ${currentStage.activeColor} ${currentStage.borderColor.replace('border-', 'border-').replace('500', '200')}`}>
+            {currentStage.title.split(' ')[0]}
           </span>
         </header>
 
-        <main className="max-w-xl mx-auto p-4 mt-4 space-y-6">
+        <main className="max-w-xl mx-auto p-4 sm:p-6 mt-4 space-y-8">
           
-          {/* Main Hero Card */}
-          <div className="bg-(--surface) border border-(--border) rounded-3xl p-6 shadow-sm text-center flex flex-col items-center relative overflow-hidden">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${currentStage.activeBg} ${!isFinalStage ? 'animate-pulse' : ''}`}>
-              <currentStage.icon className={`w-10 h-10 ${currentStage.activeColor}`} />
+          {/* Main Hero Card - Premium Glass Widget */}
+          <div className="bg-linear-to-br from-(--surface) to-(--surface-secondary) border border-(--border)/60 rounded-4xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-center flex flex-col items-center relative overflow-hidden group">
+            {/* Ambient Background Glow */}
+            <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full blur-2xl pointer-events-none opacity-20 ${currentStage.activeBg.replace('bg-', 'bg-').replace('100', '500')}`}></div>
+
+            <div className={`w-24 h-24 rounded-[20px] flex items-center justify-center mb-6 shadow-inner border border-white/50 relative z-10 ${currentStage.activeBg} ${!isFinalStage ? 'animate-pulse' : ''}`}>
+              <currentStage.icon className={`w-12 h-12 ${currentStage.activeColor}`} />
             </div>
             
-            <h2 className="text-2xl font-bold text-(--text)">{currentStage.title}</h2>
-            <p className="text-sm text-(--text-secondary) mt-1 max-w-sm">{currentStage.description}</p>
+            <h2 className="text-3xl font-black text-(--text) tracking-tight relative z-10">{currentStage.title}</h2>
+            <p className="text-base font-medium text-(--text-secondary) mt-2 max-w-sm relative z-10">{currentStage.description}</p>
             
             {order.status === 'received' && (
-               <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold animate-bounce">
-                 <ArrowLeft className="w-4 h-4" /> Please pay at the counter now
+               <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold shadow-sm relative z-10 animate-bounce">
+                 <Banknote className="w-4 h-4" /> Please pay at the counter now
                </div>
             )}
             {(order.status === 'preparing' || order.status === 'ready') && (
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold shadow-sm relative z-10">
                 <CheckCircle2 className="w-4 h-4" /> Payment Confirmed
               </div>
             )}
           </div>
 
           {/* DETAILED WORKFLOW TIMELINE */}
-          <div className="bg-(--surface) border border-(--border) rounded-3xl p-6 shadow-sm">
-            <h3 className="font-bold text-lg text-(--text) mb-6">Workflow Progress</h3>
+          <div className="bg-(--surface) border border-(--border)/50 rounded-4xl p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
+            <h3 className="font-black text-xl text-(--text) mb-8 tracking-tight">Workflow Progress</h3>
             
-            <div className="relative space-y-8 pl-4 before:absolute before:left-6.75 before:top-3 before:bottom-3 before:w-0.5 before:bg-(--border)">
+            {/* The vertical line container */}
+            <div className="relative space-y-8 pl-5 before:absolute before:left-9 before:top-4 before:bottom-4 before:w-0.75 before:bg-(--surface-secondary) before:rounded-full">
+              
+              {/* Dynamic Progress Line Overlay */}
+              <div 
+                className="absolute left-9 top-4 w-0.75 bg-linear-to-b from-blue-400 via-emerald-400 to-purple-400 rounded-full transition-all duration-1000 ease-in-out z-0" 
+                style={{ 
+                  height: `${(currentStageIdx / (stages.length - 1)) * 100}%`,
+                  bottom: '1rem' // Prevents overflow
+                }}
+              ></div>
+
               {stages.map((stage, idx) => {
                 const isPassed = currentStageIdx > idx;
                 const isCurrent = currentStageIdx === idx;
                 const Icon = stage.icon;
 
                 return (
-                  <div key={stage.key} className="relative flex items-start gap-4 z-10">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2 transition-all duration-300 ${
+                  <div key={stage.key} className="relative flex items-start gap-5 sm:gap-6 z-10">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] transition-all duration-500 ease-out ${
                       isPassed 
-                        ? 'bg-(--primary) border-(--primary) text-white' 
+                        ? 'bg-(--text) border-(--text) text-(--background) shadow-md scale-110' 
                         : isCurrent 
-                          ? `${stage.activeBg} ${stage.borderColor} ${stage.activeColor} ring-4 ring-purple-500/10`
+                          ? `${stage.activeBg} ${stage.borderColor} ${stage.activeColor} ring-4 ring-current/20 scale-125`
                           : 'bg-(--surface) border-(--border) text-(--text-muted)'
                     }`}>
-                      {isPassed ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                      {isPassed ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
 
-                    <div className="pt-1 flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className={`font-bold text-base ${isCurrent ? 'text-(--text)' : isPassed ? 'text-(--text)' : 'text-(--text-muted)'}`}>
+                    <div className={`pt-1 flex-1 transition-all duration-500 ${isCurrent ? 'translate-x-1 sm:translate-x-2' : ''}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                        <h4 className={`font-black text-base sm:text-lg tracking-tight ${isCurrent ? 'text-(--text)' : isPassed ? 'text-(--text)' : 'text-(--text-muted)'}`}>
                           {stage.title}
                         </h4>
                         {isCurrent && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-(--primary)/10 text-(--primary) px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider bg-(--text) text-(--background) px-2.5 py-1 rounded-md shadow-sm self-start sm:self-auto">
                             In Progress
                           </span>
                         )}
                       </div>
-                      <p className={`text-xs mt-0.5 ${isCurrent ? 'text-(--text-secondary)' : 'text-(--text-muted)'}`}>
+                      <p className={`text-xs sm:text-sm mt-1 font-medium leading-relaxed pr-2 ${isCurrent ? 'text-(--text-secondary)' : 'text-(--text-muted)'}`}>
                         {stage.description}
                       </p>
                     </div>
@@ -202,9 +217,9 @@ const OrderTracking = () => {
           {isFinalStage && (
             <button 
               onClick={handleDownloadBill}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2"
+              className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-lg py-5 rounded-3xl shadow-[0_10px_30px_rgba(147,51,234,0.3)] transition-all active:scale-95 hover:-translate-y-1 flex items-center justify-center gap-3 border border-purple-500/50"
             >
-              <Download className="w-5 h-5" /> Download Bill (PDF)
+              <Download className="w-6 h-6" /> Download Bill (PDF)
             </button>
           )}
 
