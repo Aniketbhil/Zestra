@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Image as ImageIcon, ArrowRight, Plus, Minus, UtensilsCrossed } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ShoppingBag, Image as ImageIcon, ArrowRight, Plus, Minus, UtensilsCrossed, ArrowLeft } from 'lucide-react';
 import usePublicMenuStore from '../../store/public/usePublicMenuStore';
 import AiRecommendations from '../../components/public/AiRecommendations';
 
@@ -53,15 +53,26 @@ const PublicMenu = () => {
   };
 
   return (
-    <div className="min-h-screen bg-(--background) pb-32">
-      {/* Restaurant Header - Upgraded with Glassmorphism */}
-      <header className="bg-(--background)/80 backdrop-blur-xl pt-10 pb-4 px-4 shadow-sm sticky top-0 z-40 border-b border-(--border)/50 transition-all">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-brrom-(--primary)/20 to-(--primary)/5 text-(--primary) mb-4 border border-(--primary)/10 shadow-sm">
-            <UtensilsCrossed className="w-7 h-7" />
+    <div className="min-h-screen bg-(--background) pb-32 font-sans selection:bg-(--primary) selection:text-white">
+      {/* Restaurant Header - Upgraded with Glassmorphism & Back Button */}
+      <header className="bg-(--background)/80 backdrop-blur-xl pt-8 pb-4 px-4 shadow-sm sticky top-0 z-40 border-b border-(--border)/50 transition-all">
+        <div className="max-w-5xl mx-auto relative">
+          
+          {/* Back to Dashboard Button */}
+          <Link 
+            to="/dashboard" 
+            className="absolute left-0 top-0 sm:top-2 w-10 h-10 bg-(--surface) hover:bg-(--surface-secondary) border border-(--border) rounded-xl flex items-center justify-center text-(--text) transition-colors active:scale-95 shadow-sm z-10"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+
+          <div className="text-center pt-10 sm:pt-0">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-(--primary)/20 to-(--primary)/5 text-(--primary) mb-4 border border-(--primary)/10 shadow-sm">
+              <UtensilsCrossed className="w-7 h-7" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight px-4">{restaurantName || 'Restaurant Menu'}</h1>
+            <p className="text-(--text-secondary) font-medium text-sm sm:text-base mt-2 px-2">Scan, choose, and order directly from your table</p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight">{restaurantName || 'Restaurant Menu'}</h1>
-          <p className="text-(--text-secondary) font-medium text-sm sm:text-base mt-2">Scan, choose, and order directly from your table</p>
         </div>
 
         {/* Category Filter Pills - Horizontally Scrollable */}
@@ -188,7 +199,7 @@ const PublicMenu = () => {
         )}
       </main>
 
-      {/* Mobile Sticky Cart Footer - Mobile Optimized */}
+      {/* Mobile Sticky Cart Footer */}
       {cartCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-6 bg-linear-to-t from-(--background) via-(--background)/95 to-transparent z-50 pointer-events-none pb-4 sm:pb-6">
           <div className="max-w-2xl mx-auto pointer-events-auto">
@@ -197,7 +208,7 @@ const PublicMenu = () => {
               className="w-full bg-(--text) hover:bg-gray-800 text-(--background) p-3 sm:p-5 rounded-[20px] sm:rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.3)] flex items-center justify-between transition-all duration-300 active:scale-95 hover:-translate-y-1 border border-gray-700"
             >
               <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                <div className="bg-white/10 px-3 py-1.5 sm:px-4 sm:py-1.5 rounded-full font-black text-xs sm:text-sm border border-white/10 flex items-center justify-center">
+                <div className="bg-white/10 px-3 py-1.5 sm:px-4 rounded-full font-black text-xs sm:text-sm border border-white/10 flex items-center justify-center">
                   {cartCount} <span className="hidden sm:inline ml-1">{cartCount === 1 ? 'item' : 'items'}</span>
                 </div>
                 <span className="font-bold text-sm sm:text-base">Checkout</span>
