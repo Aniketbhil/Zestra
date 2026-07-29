@@ -110,36 +110,47 @@ const QRCode = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
+      <div className="flex h-[calc(100vh-8rem)] items-center justify-center font-sans">
         <div className="animate-pulse flex flex-col items-center">
-          <Loader2 className="w-10 h-10 text-(--primary) animate-spin mb-4" />
-          <p className="text-(--text-muted) font-medium">Generating your QR Code...</p>
+          <div className="w-20 h-20 bg-linear-to-br from-(--primary)/20 to-(--primary)/5 rounded-3xl flex items-center justify-center mb-6 shadow-inner border border-(--primary)/10 relative">
+            <div className="absolute inset-0 border-4 border-(--primary) border-t-transparent rounded-3xl animate-spin"></div>
+            <Store className="w-8 h-8 text-(--primary) animate-pulse" />
+          </div>
+          <h3 className="text-2xl font-black text-(--text) mb-2 tracking-tight">Generating Code...</h3>
+          <p className="text-(--text-secondary) font-medium">Preparing your digital menu access.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12 px-4 sm:px-6">
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 px-1 font-sans">
       
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-(--text)">Your Digital QR Menu</h1>
-        <p className="text-(--text-secondary) text-sm mt-1">Place this on your tables for customers to scan and order instantly.</p>
+        <h1 className="text-3xl font-black text-(--text) tracking-tight">Your Digital QR Menu</h1>
+        <p className="text-(--text-secondary) font-medium text-sm mt-1.5">Place this on your tables for customers to scan and order instantly.</p>
       </div>
 
-      <div className="mt-8 bg-(--surface) rounded-4xl border border-(--border) shadow-sm p-8 sm:p-12 flex flex-col items-center text-center">
+      {/* Main Glassmorphism Bento Card */}
+      <div className="mt-8 bg-(--surface) rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-14 flex flex-col items-center text-center relative overflow-hidden">
         
-        <div className="w-16 h-16 bg-(--primary)/10 text-(--primary) rounded-2xl flex items-center justify-center mb-6">
-          <Store className="w-8 h-8" />
+        {/* Ambient Glows */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-(--primary)/5 blur-[100px] rounded-full pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none -ml-20 -mb-20"></div>
+
+        {/* Icon Header */}
+        <div className="w-20 h-20 bg-linear-to-br from-(--primary)/20 to-emerald-500/10 text-(--primary) rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-(--primary)/20 relative z-10">
+          <Store className="w-10 h-10" />
         </div>
         
-        <h2 className="text-xl font-bold text-(--text) mb-2">Ready to Print</h2>
-        <p className="text-(--text-secondary) mb-8 max-w-md">
+        <h2 className="text-3xl font-black text-(--text) mb-3 tracking-tight relative z-10">Ready to Print</h2>
+        <p className="text-(--text-secondary) font-medium text-base mb-10 max-w-lg relative z-10 leading-relaxed">
           Customers simply scan this code with their phone camera to view your live menu, place orders, and track their food status in real-time. No app download required.
         </p>
 
         {/* QR Code Display Container */}
-        <div className="p-4 bg-white rounded-3xl shadow-sm border-2 border-dashed border-gray-200 mb-8 inline-block">
+        <div className="p-6 bg-white rounded-4xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-gray-100 mb-12 relative z-10 group transition-transform duration-500 hover:scale-105">
           <img 
             src={imageSrc} 
             alt="Restaurant QR Code" 
@@ -148,32 +159,32 @@ const QRCode = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-lg mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-lg mb-12 relative z-10">
           <button 
             onClick={handlePrintPDF}
-            className="w-full sm:w-auto px-8 py-3.5 bg-(--primary) hover:bg-(--primary-hover) text-white font-bold rounded-[14px] transition-all flex justify-center items-center gap-2 shadow-lg shadow-(--primary)/25 active:scale-95"
+            className="w-full sm:w-auto px-8 py-4 bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 text-white font-black text-base rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 shadow-[0_8px_20px_rgba(16,185,129,0.25)] active:scale-95 hover:-translate-y-1 border border-emerald-400/50"
           >
             <Printer className="w-5 h-5" /> Print QR
           </button>
           
           <button 
             onClick={handleDownloadPNG}
-            className="w-full sm:w-auto px-8 py-3.5 bg-(--surface-secondary) hover:bg-(--border) border border-(--border) text-(--text) font-bold rounded-[14px] transition-all flex justify-center items-center gap-2 active:scale-95"
+            className="w-full sm:w-auto px-8 py-4 bg-(--background) hover:bg-(--surface-secondary) border border-(--border)/80 text-(--text) font-black text-base rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 active:scale-95 hover:-translate-y-1 hover:shadow-sm"
           >
             <Download className="w-5 h-5" /> Download PNG
           </button>
         </div>
 
-        {/* Direct Link Section */}
-        <div className="w-full max-w-lg bg-(--background) p-4 rounded-[20px] border border-(--border) text-left">
-          <label className="block text-xs font-bold text-(--text-muted) uppercase tracking-wider mb-2">Direct Menu Link</label>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-(--surface) border border-(--border) px-4 py-3 rounded-xl truncate text-sm font-medium text-(--text-secondary)">
+        {/* Direct Link Section - Premium Snippet Style */}
+        <div className="w-full max-w-lg bg-(--background)/50 backdrop-blur-sm p-5 rounded-3xl border border-(--border)/60 text-left relative z-10 shadow-inner">
+          <label className="block text-[10px] font-black text-(--text-secondary) uppercase tracking-widest mb-3">Direct Menu Link</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-(--surface) border border-(--border)/60 px-4 py-3.5 rounded-2xl truncate text-sm font-mono font-medium text-(--text-secondary) shadow-sm">
               {qrData?.menu_url}
             </div>
             <button 
               onClick={handleCopyLink}
-              className="p-3 bg-(--surface-secondary) hover:bg-(--border) border border-(--border) rounded-xl text-(--text) transition-colors shrink-0"
+              className="p-3.5 bg-(--surface) hover:bg-(--primary)/10 border border-(--border)/60 hover:border-(--primary)/30 rounded-2xl text-(--text-secondary) hover:text-(--primary) transition-all duration-300 shrink-0 shadow-sm active:scale-95"
               title="Copy Link"
             >
               <Copy className="w-5 h-5" />
