@@ -89,8 +89,11 @@ const Analytics = () => {
   // --- Fallback States ---
   if (!restaurant) {
     return (
-      <div className="flex h-full items-center justify-center text-(--text-muted)">
-        Please complete onboarding to view analytics.
+      <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
+        <div className="flex flex-col items-center text-(--text-muted) bg-(--surface) p-8 rounded-4xl border border-(--border)/60 shadow-sm">
+          <Activity className="w-12 h-12 mb-4 opacity-30" />
+          <p className="font-bold text-lg">Please complete onboarding to view analytics.</p>
+        </div>
       </div>
     );
   }
@@ -100,71 +103,86 @@ const Analytics = () => {
     : "No data yet";
 
   return (
-    <div className="space-y-8 pb-12 max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="space-y-8 pb-12 max-w-7xl mx-auto px-1 font-sans">
       
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-(--text)">Analytics Overview</h1>
-        <p className="text-(--text-secondary) text-sm mt-1">Real-time performance metrics synced to your timezone.</p>
+        <h1 className="text-3xl font-black text-(--text) tracking-tight">Analytics Overview</h1>
+        <p className="text-(--text-secondary) font-medium text-sm mt-1.5">Real-time performance metrics synced to your timezone.</p>
       </div>
 
       {/* --- Key Metrics Grid --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-(--surface) p-6 rounded-3xl border border-(--border) shadow-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-[#DCFCE7] text-[#22C55E] flex items-center justify-center shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        
+        {/* Total Revenue */}
+        <div className="bg-(--surface) p-6 sm:p-8 rounded-4xl border border-(--border)/60 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-emerald-500/18 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/25 transition-colors"></div>
+          <div className="flex items-center justify-between gap-4 mb-6 relative z-10">
+            <span className="text-sm font-bold text-(--text-secondary) uppercase tracking-wider">Total Revenue</span>
+            <div className="w-12 h-12 rounded-[14px] bg-linear-to-br from-emerald-100 to-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-500">
               <TrendingUp className="w-6 h-6" />
             </div>
-            <span className="font-medium text-(--text-secondary)">Total Revenue</span>
           </div>
-          <h3 className="text-3xl font-extrabold text-(--text)">
+          <h3 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight relative z-10">
             ${parseFloat(analyticsData?.total_sales || 0).toFixed(2)}
           </h3>
         </div>
 
-        <div className="bg-(--surface) p-6 rounded-3xl border border-(--border) shadow-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-[#DBEAFE] text-[#3B82F6] flex items-center justify-center shrink-0">
+        {/* Orders Today */}
+        <div className="bg-(--surface) p-6 sm:p-8 rounded-4xl border border-(--border)/60 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/20 transition-colors"></div>
+          <div className="flex items-center justify-between gap-4 mb-6 relative z-10">
+            <span className="text-sm font-bold text-(--text-secondary) uppercase tracking-wider">Orders Today (IST)</span>
+            <div className="w-12 h-12 rounded-[14px] bg-linear-to-br from-blue-100 to-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-500">
               <ShoppingBag className="w-6 h-6" />
             </div>
-            <span className="font-medium text-(--text-secondary)">Orders Today (IST)</span>
           </div>
-          <h3 className="text-3xl font-extrabold text-(--text)">{todayOrdersCount}</h3>
+          <h3 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight relative z-10">
+            {todayOrdersCount}
+          </h3>
         </div>
 
-        <div className="bg-(--surface) p-6 rounded-3xl border border-(--border) shadow-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+        {/* Top Selling Item */}
+        <div className="bg-(--surface) p-6 sm:p-8 rounded-4xl border border-(--border)/60 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-purple-500/20 transition-colors"></div>
+          <div className="flex items-center justify-between gap-4 mb-6 relative z-10">
+            <span className="text-sm font-bold text-(--text-secondary) uppercase tracking-wider">Top Selling Item</span>
+            <div className="w-12 h-12 rounded-[14px] bg-linear-to-br from-purple-100 to-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-500">
               <Award className="w-6 h-6" />
             </div>
-            <span className="font-medium text-(--text-secondary)">Top Selling Item</span>
           </div>
-          <h3 className="text-xl font-extrabold text-(--text) truncate" title={topSellingItem}>
+          <h3 className="text-2xl font-black text-(--text) truncate tracking-tight relative z-10" title={topSellingItem}>
             {topSellingItem}
           </h3>
         </div>
 
-        <div className="bg-(--surface) p-6 rounded-3xl border border-(--border) shadow-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+        {/* Business Status */}
+        <div className="bg-(--surface) p-6 sm:p-8 rounded-4xl border border-(--border)/60 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden">
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-colors"></div>
+          <div className="flex items-center justify-between gap-4 mb-6 relative z-10">
+            <span className="text-sm font-bold text-(--text-secondary) uppercase tracking-wider">Business Status</span>
+            <div className="w-12 h-12 rounded-[14px] bg-linear-to-br from-amber-100 to-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-500">
               <Activity className="w-6 h-6" />
             </div>
-            <span className="font-medium text-(--text-secondary)">Business Status</span>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h3 className="text-xl font-bold text-(--text)">Online</h3>
+          <div className="flex items-center gap-3 mt-1 relative z-10">
+            <span className="relative flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 shadow-[0_0_8px_#10B981]"></span>
+            </span>
+            <h3 className="text-3xl font-black text-(--text) tracking-tight">Online</h3>
           </div>
         </div>
       </div>
 
       {/* --- IST Orders By Hour Chart --- */}
-      <div className="bg-(--surface) rounded-3xl border border-(--border) shadow-sm p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+      <div className="bg-(--surface) rounded-4xl border border-(--border)/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] p-6 sm:p-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
           <div>
-            <h2 className="text-xl font-bold text-(--text)">Orders by Hour</h2>
-            <p className="text-sm text-(--text-secondary) mt-1">Today's hourly traffic distribution</p>
+            <h2 className="text-2xl font-black text-(--text) tracking-tight">Orders by Hour</h2>
+            <p className="text-sm font-medium text-(--text-secondary) mt-1.5">Today's hourly traffic distribution</p>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-(--surface-secondary) border border-(--border) text-xs font-bold text-(--text-muted) tracking-wide">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-(--background) border border-(--border)/60 text-xs font-bold text-(--text-secondary) tracking-wide shadow-sm">
             <AlertCircle className="w-4 h-4 text-(--primary)" />
             Timezone: IST (Asia/Kolkata)
           </div>
@@ -173,34 +191,35 @@ const Analytics = () => {
         <div className="h-100 w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
               <XAxis 
                 dataKey="displayTime" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 12, fill: 'var(--text-muted)' }} 
-                dy={10}
+                tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} 
+                dy={15}
               />
               <YAxis 
                 allowDecimals={false} 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 12, fill: 'var(--text-muted)' }} 
+                tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} 
+                dx={-10}
               />
               <Tooltip 
-                cursor={{ fill: 'var(--surface-secondary)' }}
+                cursor={{ fill: 'var(--surface-secondary)', opacity: 0.4 }}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     const isCurrent = data.hour === currentISTHour;
                     return (
-                      <div className="bg-(--surface) border border-(--border) p-4 rounded-2xl shadow-xl">
-                        <p className="font-bold text-(--text) text-base mb-1">{data.displayTime} IST</p>
-                        <p className="text-(--primary) font-semibold flex items-center gap-2">
+                      <div className="bg-(--surface) border border-(--border)/60 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
+                        <p className="font-black text-(--text) text-lg mb-1 tracking-tight">{data.displayTime} IST</p>
+                        <p className="text-(--primary) font-bold flex items-center gap-2">
                           <ShoppingBag className="w-4 h-4" /> {data.orders} Orders
                         </p>
                         {isCurrent && (
-                          <div className="mt-2 text-[10px] uppercase font-bold tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md inline-block">
+                          <div className="mt-3 text-[10px] uppercase font-black tracking-widest bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md inline-block">
                             Current Hour
                           </div>
                         )}
@@ -212,14 +231,14 @@ const Analytics = () => {
               />
               <Bar 
                 dataKey="orders" 
-                radius={[6, 6, 0, 0]}
+                radius={[8, 8, 0, 0]}
                 animationDuration={1500}
               >
                 {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={entry.hour === currentISTHour ? 'var(--primary)' : 'var(--primary-hover)'} 
-                    fillOpacity={entry.hour === currentISTHour ? 1 : 0.4}
+                    fillOpacity={entry.hour === currentISTHour ? 1 : 0.25}
                   />
                 ))}
               </Bar>
