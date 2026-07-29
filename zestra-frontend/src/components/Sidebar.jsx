@@ -1,13 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Menu as MenuIcon, QrCode, ShoppingBag, 
-  TrendingUp, Sparkles, Settings, BarChart3, Sun, Moon 
+  TrendingUp, Sparkles, Settings, BarChart3, Sun, Moon, X
 } from 'lucide-react';
 import useAuthStore from '../store/auth/useAuthStore';
 import useThemeStore from '../store/theme/useThemeStore';
 import companyLogo from '../assets/ComponyLogo.png';
 
-const Sidebar = () => {
+// Accept the new props from DashboardLayout
+const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
@@ -31,19 +32,32 @@ const Sidebar = () => {
   const links = user?.role === 'restaurant' ? restaurantLinks : customerLinks;
 
   return (
-    // FIX: Changed h-[calc(100vh-4rem)] to h-screen and top-16 to top-0
-    <aside className="w-64 bg-(--surface) border-r border-(--border) h-screen sticky top-0 hidden md:flex flex-col z-40 shadow-sm">
+    <aside 
+      className={`fixed md:relative inset-y-0 left-0 w-64 bg-(--surface) border-r border-(--border) h-screen flex flex-col z-50 shadow-2xl md:shadow-sm transform transition-transform duration-300 ease-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:translate-x-0`}
+    >
       
-      {/* Brand Header - Now perfectly at the top left corner */}
-      <div className="h-16 px-6 flex items-center gap-3 border-b border-(--border) shrink-0">
-        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-sm border border-(--border) bg-white flex items-center justify-center">
-          <img 
-            src={companyLogo} 
-            alt="Zestra Brand" 
-            className="w-full h-full object-contain"
-          />
+      {/* Brand Header */}
+      <div className="h-16 px-6 flex items-center justify-between border-b border-(--border) shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-sm border border-(--border) bg-white flex items-center justify-center">
+            <img 
+              src={companyLogo} 
+              alt="Zestra Brand" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="text-2xl font-extrabold text-(--text) tracking-tight">Zestra</span>
         </div>
-        <span className="text-2xl font-extrabold text-(--text) tracking-tight">Zestra</span>
+        
+        {/* Mobile Close Button */}
+        <button 
+          onClick={onClose}
+          className="md:hidden p-2 text-(--text-muted) hover:text-(--text) hover:bg-(--surface-secondary) rounded-lg transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation Links */}
@@ -56,9 +70,10 @@ const Sidebar = () => {
             <Link
               key={link.name}
               to={link.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[14px] font-medium transition-all duration-200 ${
+              onClick={onClose} // Auto-close sidebar on mobile when a link is clicked
+              className={`flex items-center gap-3 px-4 py-3 rounded-[14px] font-medium transition-all duration-200 active:scale-95 ${
                 isActive 
-                  ? 'bg-(--primary)/10 text-(--primary)' 
+                  ? 'bg-(--primary)/10 text-(--primary) shadow-sm' 
                   : 'text-(--text-secondary) hover:bg-(--surface-secondary) hover:text-(--text)'
               }`}
             >
@@ -73,7 +88,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-(--border) shrink-0 bg-(--surface)">
         <button 
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-[14px] bg-(--background) border border-(--border) hover:bg-(--surface-secondary) transition-colors text-(--text-secondary) hover:text-(--text)"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-[14px] bg-(--background) border border-(--border) hover:bg-(--surface-secondary) transition-colors text-(--text-secondary) hover:text-(--text) active:scale-95"
         >
           <span className="font-medium text-sm">
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
