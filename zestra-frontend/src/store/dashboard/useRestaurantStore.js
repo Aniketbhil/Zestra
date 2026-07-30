@@ -21,14 +21,27 @@ const useRestaurantStore = create((set) => ({
     }
   },
 
-  // This is the missing function!
   fetchMyRestaurant: async () => {
     try {
       const response = await api.get('/restaurants/me');
       set({ restaurant: response.data });
     } catch (error) {
-      // If 404, they haven't onboarded yet, which is fine.
       set({ restaurant: null });
+    }
+  },
+
+  // NEW: Update restaurant details including total_tables
+  updateMyRestaurant: async (updateData) => {
+    set({ isLoading: true });
+    try {
+      const response = await api.patch('/restaurants/me', updateData);
+      set({ restaurant: response.data, isLoading: false });
+      toast.success('Restaurant details updated successfully!');
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update restaurant details.');
+      set({ isLoading: false });
+      return false;
     }
   },
 
