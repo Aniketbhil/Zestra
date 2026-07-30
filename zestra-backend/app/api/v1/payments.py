@@ -267,3 +267,31 @@ async def razorpay_webhook(
                 )
 
     return {"status": "ok"}
+
+
+@router.get("/debug-config")
+async def debug_razorpay_config():
+    import os
+
+    key_id = settings.RAZORPAY_KEY_ID
+    key_secret = settings.RAZORPAY_KEY_SECRET
+    env_path = os.path.abspath(".env")
+    env_exists = os.path.exists(".env")
+
+    render_env = {
+        "RENDER": os.getenv("RENDER"),
+        "RENDER_SERVICE_ID": os.getenv("RENDER_SERVICE_ID"),
+        "RENDER_EXTERNAL_URL": os.getenv("RENDER_EXTERNAL_URL"),
+        "is_render": os.getenv("RENDER") is not None or os.getenv("RENDER_SERVICE_ID") is not None,
+    }
+
+    return {
+        "key_id_length": len(key_id),
+        "starts_with_rzp_test": key_id.startswith("rzp_test_"),
+        "key_id_first6": key_id[:6],
+        "key_id_last4": key_id[-4:] if len(key_id) >= 4 else key_id,
+        "key_secret_length": len(key_secret),
+        "env_file_exists": env_exists,
+        "env_file_path": env_path,
+        "running_env": render_env,
+    }
