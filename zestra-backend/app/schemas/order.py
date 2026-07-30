@@ -23,6 +23,7 @@ class OrderItemResponse(BaseModel):
     id: UUID
     order_id: UUID
     menu_item_id: UUID
+    name: str | None = None
     quantity: int
     price_at_order: Decimal
 

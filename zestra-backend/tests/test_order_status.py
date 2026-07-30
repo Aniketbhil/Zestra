@@ -377,6 +377,15 @@ async def test_list_orders_restaurant_scoping_and_status_filtering():
         session.add_all([order_received, order_preparing, order_ready, order_served])
         await session.commit()
 
+        order_item = OrderItem(
+            order_id=order_received.id,
+            menu_item_id=item.id,
+            quantity=1,
+            price_at_order=Decimal("12.00"),
+        )
+        session.add(order_item)
+        await session.commit()
+
         owner_id = owner.id
         customer_id = customer.id
 
@@ -391,6 +400,10 @@ async def test_list_orders_restaurant_scoping_and_status_filtering():
     statuses_default = [o["status"] for o in orders_default]
     assert "served" not in statuses_default
     assert set(statuses_default) == {"received", "preparing", "ready"}
+    # Verify order item contains name field populated from MenuItem
+    received_order_data = next(o for o in orders_default if o["status"] == "received")
+    assert len(received_order_data["items"]) == 1
+    assert received_order_data["items"][0]["name"] == "Burger"
 
     # 2. Filter by status: ?status=received,preparing
     res_filter = client.get(

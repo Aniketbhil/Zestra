@@ -2,11 +2,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.deps import require_role
 from app.db.session import get_db
-from app.models.order import Order, OrderStatus
+from app.models.order import Order, OrderItem, OrderStatus
 from app.models.restaurant import Restaurant
 from app.models.user import User, UserRole
 from app.schemas.order import CustomerOrderResponse, OrderResponse, OrderStatusUpdate
@@ -56,7 +56,7 @@ async def list_orders(
     stmt = (
         select(Order)
         .where(Order.restaurant_id == restaurant.id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items).joinedload(OrderItem.menu_item))
         .order_by(Order.created_at.desc())
     )
 
@@ -98,7 +98,10 @@ async def get_my_orders(
     stmt = (
         select(Order)
         .where(Order.customer_id == current_user.id)
-        .options(selectinload(Order.restaurant), selectinload(Order.items))
+        .options(
+            selectinload(Order.restaurant),
+            selectinload(Order.items).joinedload(OrderItem.menu_item),
+        )
         .order_by(Order.created_at.desc())
     )
     res = await db.execute(stmt)
@@ -128,7 +131,7 @@ async def get_order(
     stmt = (
         select(Order)
         .where(Order.id == order_id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items).joinedload(OrderItem.menu_item))
     )
     res = await db.execute(stmt)
     order = res.scalar_one_or_none()
@@ -162,7 +165,10 @@ async def update_order_status(
     stmt = (
         select(Order)
         .where(Order.id == order_id)
-        .options(selectinload(Order.restaurant), selectinload(Order.items))
+        .options(
+            selectinload(Order.restaurant),
+            selectinload(Order.items).joinedload(OrderItem.menu_item),
+        )
     )
     res = await db.execute(stmt)
     order = res.scalar_one_or_none()
@@ -196,7 +202,7 @@ async def update_order_status(
     stmt_order = (
         select(Order)
         .where(Order.id == order.id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items).joinedload(OrderItem.menu_item))
     )
     res_order = await db.execute(stmt_order)
     updated_order = res_order.scalar_one()

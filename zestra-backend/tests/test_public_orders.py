@@ -301,6 +301,7 @@ async def test_get_order_by_id_success():
         assert float(data["total"]) == 20.00
         assert len(data["items"]) == 1
         assert data["items"][0]["menu_item_id"] == str(item_id)
+        assert data["items"][0]["name"] == "Cheeseburger"
         assert data["items"][0]["quantity"] == 2
 
     async with engine.begin() as conn:

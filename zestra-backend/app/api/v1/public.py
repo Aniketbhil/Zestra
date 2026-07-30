@@ -3,7 +3,7 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -250,7 +250,7 @@ async def create_public_order(
     stmt_order = (
         select(Order)
         .where(Order.id == order.id)
-        .options(selectinload(Order.items))
+        .options(selectinload(Order.items).joinedload(OrderItem.menu_item))
     )
     res_order = await db.execute(stmt_order)
     created_order = res_order.scalar_one()

@@ -103,3 +103,8 @@ class OrderItem(Base):
 
     order: Mapped["Order"] = relationship("Order", back_populates="items")
     menu_item: Mapped["MenuItem"] = relationship("MenuItem")
+
+    @property
+    def name(self) -> str | None:
+        return self.menu_item.name if self.menu_item else None
+
