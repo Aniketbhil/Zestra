@@ -17,6 +17,19 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.ENV != "production":
+        key_id = settings.RAZORPAY_KEY_ID
+        key_id_len = len(key_id)
+        key_id_prefix = key_id[:8] if key_id else ""
+        starts_with_rzp = key_id.startswith("rzp_test_")
+        secret_len = len(settings.RAZORPAY_KEY_SECRET)
+
+        logger.info(
+            f"Razorpay Sanity Check [ENV={settings.ENV}]: "
+            f"RAZORPAY_KEY_ID length={key_id_len}, first 8 chars='{key_id_prefix}', starts with 'rzp_test_': {starts_with_rzp}; "
+            f"RAZORPAY_KEY_SECRET length={secret_len}"
+        )
+
     worker = None
     worker_task = None
     try:

@@ -70,5 +70,12 @@ class Settings(BaseSettings):
                 return v.replace("http://", "redis://", 1)
         return v
 
+    @field_validator("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET", mode="before")
+    @classmethod
+    def strip_razorpay_secrets(cls, v: str) -> str:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
 
 settings = Settings()
