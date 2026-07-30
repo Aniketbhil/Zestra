@@ -8,6 +8,7 @@ import useThemeStore from "./store/theme/useThemeStore";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import VerifyOTP from "./pages/auth/VerifyOTP"; // <-- Added Import
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import SkeletonLoader from "./components/SkeletonLoader";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -77,6 +78,13 @@ function App() {
           path="/register"
           element={
             !isAuthenticated ? <Register /> : <Navigate to="/dashboard" />
+          }
+        />
+        {/* OTP Verification Route */}
+        <Route
+          path="/verify-otp"
+          element={
+            !isAuthenticated ? <VerifyOTP /> : <Navigate to="/dashboard" />
           }
         />
 

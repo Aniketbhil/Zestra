@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/auth/useAuthStore';
-import { Mail, Lock, UserPlus, Store, User } from 'lucide-react';
+import { Mail, Lock, UserPlus, Store, User, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Register = () => {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('customer');
@@ -16,7 +17,7 @@ const Register = () => {
     e.preventDefault();
     
     if (!email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -25,9 +26,18 @@ const Register = () => {
       return;
     }
 
-    const success = await register(email, password, role);
+    if (phone && phone.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Format phone number with +91 if provided
+    const formattedPhone = phone.trim() ? `+91${phone.trim()}` : null;
+
+    const success = await register(email, password, role, formattedPhone);
     if (success) {
-      navigate('/login');
+      // Redirect to OTP Verification page and pass the email in state
+      navigate('/verify-otp', { state: { email } });
     }
   };
 
@@ -38,87 +48,108 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-(--background) p-4 py-12">
-      <div className="w-full max-w-md bg-(--surface) p-8 rounded-[20px] shadow-[0_4px_18px_rgba(15,23,42,0.05)] border border-(--border)">
+    <div className="min-h-screen flex items-center justify-center bg-(--background) p-4 py-12 font-sans">
+      <div className="w-full max-w-md bg-(--surface) p-8 sm:p-10 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-(--border)/60 relative overflow-hidden">
         
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-(--text) mb-2">Create Account</h1>
-          <p className="text-(--text-muted)">Join Zestra to manage your dining experience</p>
+        {/* Ambient Glow */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-(--primary)/5 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20"></div>
+
+        <div className="text-center mb-8 relative z-10">
+          <h1 className="text-3xl font-black text-(--text) mb-2 tracking-tight">Create Account</h1>
+          <p className="text-(--text-secondary) font-medium text-sm">Join Zestra to manage your dining experience</p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-5">
+        <form onSubmit={handleRegister} className="space-y-6 relative z-10">
           
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-4 mb-2">
             <button
               type="button"
               onClick={() => setRole('customer')}
-              className={`py-3 px-4 border rounded-[14px] flex flex-col items-center justify-center transition-all ${
+              className={`py-4 px-4 border-2 rounded-[20px] flex flex-col items-center justify-center transition-all duration-300 ${
                 role === 'customer' 
-                ? 'bg-(--primary) text-white border-transparent shadow-[0_4px_14px_rgba(16,185,129,0.25)]' 
-                : 'bg-(--surface) text-(--text-secondary) border-(--border) hover:bg-(--surface-secondary)'
+                ? 'bg-linear-to-b from-(--primary)/10 to-(--primary)/5 text-(--primary) border-(--primary)/30 shadow-inner' 
+                : 'bg-(--background) text-(--text-muted) border-(--border)/60 hover:border-(--border) hover:bg-(--surface-secondary)'
               }`}
             >
               <User className="h-6 w-6 mb-2" />
-              <span className="font-semibold text-sm">Customer</span>
+              <span className="font-black text-sm tracking-tight">Customer</span>
             </button>
             
             <button
               type="button"
               onClick={() => setRole('restaurant')}
-              className={`py-3 px-4 border rounded-[14px] flex flex-col items-center justify-center transition-all ${
+              className={`py-4 px-4 border-2 rounded-[20px] flex flex-col items-center justify-center transition-all duration-300 ${
                 role === 'restaurant' 
-                ? 'bg-(--primary) text-white border-transparent shadow-[0_4px_14px_rgba(16,185,129,0.25)]' 
-                : 'bg-(--surface) text-(--text-secondary) border-(--border) hover:bg-(--surface-secondary)'
+                ? 'bg-linear-to-b from-(--primary)/10 to-(--primary)/5 text-(--primary) border-(--primary)/30 shadow-inner' 
+                : 'bg-(--background) text-(--text-muted) border-(--border)/60 hover:border-(--border) hover:bg-(--surface-secondary)'
               }`}
             >
               <Store className="h-6 w-6 mb-2" />
-              <span className="font-semibold text-sm">Restaurant</span>
+              <span className="font-black text-sm tracking-tight">Restaurant</span>
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-(--text-secondary) mb-1">Email</label>
+            <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Email <span className="text-red-500">*</span></label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-(--text-muted)" />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-(--text-muted)/70" />
               </div>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-(--surface) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-[rgba(16,185,129,0.15)] transition-all text-(--text) placeholder-(--text-muted)"
+                className="w-full pl-12 pr-5 py-4 bg-(--background) border-2 border-(--border)/60 rounded-2xl focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 transition-all text-(--text) font-medium placeholder:text-(--text-muted)/50 shadow-sm"
                 placeholder="name@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-(--text-secondary) mb-1">Password</label>
+            <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Phone Number (Optional)</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-(--text-muted)" />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Phone className="h-5 w-5 text-(--text-muted)/70" />
+                <span className="ml-2.5 font-black text-(--text) text-base mt-0.5">+91</span>
+              </div>
+              <input
+                type="tel"
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                className="w-full pl-24 pr-5 py-4 bg-(--background) border-2 border-(--border)/60 rounded-2xl focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 transition-all text-(--text) font-medium placeholder:text-(--text-muted)/50 shadow-sm"
+                placeholder="10-digit number"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Password <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-(--text-muted)/70" />
               </div>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-(--surface) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-[rgba(16,185,129,0.15)] transition-all text-(--text) placeholder-(--text-muted)"
+                className="w-full pl-12 pr-5 py-4 bg-(--background) border-2 border-(--border)/60 rounded-2xl focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 transition-all text-(--text) font-medium placeholder:text-(--text-muted)/50 shadow-sm"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-(--text-secondary) mb-1">Confirm Password</label>
+            <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Confirm Password <span className="text-red-500">*</span></label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-(--text-muted)" />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-(--text-muted)/70" />
               </div>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-(--surface) border border-(--border) rounded-[14px] focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-[rgba(16,185,129,0.15)] transition-all text-(--text) placeholder-(--text-muted)"
+                className="w-full pl-12 pr-5 py-4 bg-(--background) border-2 border-(--border)/60 rounded-2xl focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 transition-all text-(--text) font-medium placeholder:text-(--text-muted)/50 shadow-sm"
                 placeholder="••••••••"
               />
             </div>
@@ -127,9 +158,9 @@ const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-[14px] shadow-[0_4px_14px_rgba(16,185,129,0.25)] text-white bg-(--primary) hover:bg-(--primary-hover) focus:outline-none font-semibold transition-colors disabled:opacity-70 mt-4"
+            className="w-full flex justify-center items-center py-4 px-4 border border-emerald-400/50 rounded-2xl shadow-[0_8px_20px_rgba(16,185,129,0.25)] text-white bg-linear-to-r from-(--primary) to-emerald-600 hover:from-(--primary-hover) hover:to-emerald-700 focus:outline-none font-black text-base transition-all active:scale-95 disabled:opacity-70 mt-6"
           >
-            {isLoading ? 'Creating account...' : (
+            {isLoading ? <span className="animate-pulse">Creating account...</span> : (
               <>
                 <UserPlus className="mr-2 h-5 w-5" /> Create Account
               </>
@@ -137,22 +168,22 @@ const Register = () => {
           </button>
         </form>
 
-        <div className="mt-6">
+        <div className="mt-8 relative z-10">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-(--border)"></div>
+              <div className="w-full border-t border-(--border)/60"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-(--surface) text-(--text-muted)">Or register with</span>
+              <span className="px-4 bg-(--surface) text-(--text-muted) font-bold">Or register with</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogleSignup}
             type="button"
-            className="mt-6 w-full flex justify-center items-center py-3 px-4 border border-(--border) rounded-[14px] bg-(--surface) text-(--text) hover:bg-(--surface-secondary) transition-colors font-medium"
+            className="mt-6 w-full flex justify-center items-center py-4 px-4 border border-(--border)/80 rounded-2xl bg-(--background) text-(--text) hover:bg-(--surface-secondary) transition-all font-black shadow-sm active:scale-95"
           >
-            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -162,9 +193,9 @@ const Register = () => {
           </button>
         </div>
 
-        <p className="mt-8 text-center text-sm text-(--text-secondary)">
+        <p className="mt-8 text-center text-sm font-medium text-(--text-secondary) relative z-10">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-(--primary) hover:text-(--primary-hover)">
+          <Link to="/login" className="font-black text-(--primary) hover:text-(--primary-hover) underline decoration-transparent hover:decoration-current transition-colors">
             Sign in
           </Link>
         </p>
