@@ -8,15 +8,10 @@ const VerifyOTP = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const email = location.state?.email;
-  const originalPhone = location.state?.phone;
 
   const { verifyOtp, resendOtp, isLoading } = useAuthStore();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [resendCooldown, setResendCooldown] = useState(60);
-  
-  // Manage dynamic UI state for where the code was sent
-  const [sentTarget, setSentTarget] = useState(originalPhone ? 'phone no.' : 'email');
-  const [targetValue, setTargetValue] = useState(originalPhone ? originalPhone : email);
   
   const inputRefs = useRef([]);
 
@@ -91,9 +86,7 @@ const VerifyOTP = () => {
     const success = await resendOtp(email);
     if (success) {
       setResendCooldown(60); // Reset timer to 60 seconds
-      // Force UI to show it was sent to email (since SMS costs money)
-      setSentTarget('email');
-      setTargetValue(email);
+      toast.success("Code resent to your email/phone number");
     }
   };
 
@@ -113,11 +106,10 @@ const VerifyOTP = () => {
             <ShieldCheck className="w-10 h-10 text-(--primary)" />
           </div>
           <h1 className="text-3xl font-black text-(--text) mb-2 tracking-tight">
-            Check your {sentTarget === 'email' ? 'email' : 'phone'}
+            Check your email/phone number
           </h1>
           <p className="text-(--text-secondary) font-medium text-sm">
-            We sent a 6-digit verification code to your {sentTarget}<br/>
-            <span className="font-bold text-(--text) block mt-1">{targetValue}</span>
+            We sent a 6-digit verification code to your email/phone number.
           </p>
         </div>
 
