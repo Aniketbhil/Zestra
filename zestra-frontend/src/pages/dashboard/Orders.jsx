@@ -67,14 +67,26 @@ const Orders = () => {
         </div>
 
         {/* Order Items Box (Digital Receipt Look) */}
-        <div className="bg-(--background) rounded-2xl p-4 border border-(--border)/50 mb-5 max-h-40 overflow-y-auto scrollbar-thin shadow-inner relative">
-          <div className="space-y-2.5">
+        {/* Tighter horizontal padding and inline-block to shrink to content if possible, while max-w-full prevents overflow */}
+        <div className="bg-(--background) rounded-2xl p-3 border border-(--border)/50 mb-5 max-h-40 overflow-y-auto scrollbar-thin shadow-inner relative max-w-full">
+          <div className="space-y-3">
             {order.items?.map((item, idx) => (
-              <div key={idx} className="flex justify-between text-sm items-start">
-                <span className="font-bold text-(--text) leading-tight">
-                  <span className="inline-flex items-center justify-center min-w-6 h-6 bg-(--primary)/10 text-(--primary) rounded-md mr-2.5 text-xs font-black shadow-sm">{item.quantity}x</span> 
-                  Menu Item <span className="text-[10px] text-(--text-muted) font-mono block mt-0.5 opacity-60">({item.menu_item_id.slice(0,6)})</span>
-                </span>
+              <div key={idx} className="flex text-sm items-start gap-3">
+                <span className="inline-flex items-center justify-center min-w-6 h-6 bg-(--primary)/10 text-(--primary) rounded-md text-xs font-black shadow-sm shrink-0">
+                  {item.quantity}x
+                </span> 
+                {/* Dynamically render item.name from the backend schema[cite: 1] with line clamping for long names */}
+                <div className="flex-1 min-w-0">
+                   <span className="font-bold text-(--text) leading-tight block wrap-break-word">
+                    {item.name || `Menu Item`}
+                   </span>
+                   {/* Only show the ID if we don't have the name as a fallback */}
+                   {!item.name && (
+                      <span className="text-[10px] text-(--text-muted) font-mono block mt-0.5 opacity-60">
+                        ({item.menu_item_id.slice(0,6)})
+                      </span>
+                   )}
+                </div>
               </div>
             ))}
           </div>
