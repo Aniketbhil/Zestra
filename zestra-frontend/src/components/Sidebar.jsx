@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Menu as MenuIcon, QrCode, ShoppingBag, 
-  TrendingUp, Sparkles, Settings, BarChart3, Sun, Moon, X
+  TrendingUp, Sparkles, Settings, BarChart3, Sun, Moon, X,
+  CalendarDays // <-- Added this import for Reservations
 } from 'lucide-react';
 import useAuthStore from '../store/auth/useAuthStore';
 import useThemeStore from '../store/theme/useThemeStore';
@@ -16,6 +17,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const restaurantLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Menu', path: '/dashboard/menu', icon: MenuIcon },
+    { name: 'Reservations', path: '/dashboard/reservations', icon: CalendarDays }, // <-- New
     { name: 'Orders', path: '/dashboard/orders', icon: ShoppingBag },
     { name: 'QR Code', path: '/dashboard/qr', icon: QrCode },
     { name: 'Inventory', path: '/dashboard/inventory', icon: TrendingUp },
@@ -26,6 +28,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const customerLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Reservations', path: '/dashboard/reservations', icon: CalendarDays }, // <-- New
     { name: 'Settings', path: '/dashboard/settings', icon: Settings },
   ];
 

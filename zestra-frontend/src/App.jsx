@@ -8,7 +8,7 @@ import useThemeStore from "./store/theme/useThemeStore";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import VerifyOTP from "./pages/auth/VerifyOTP"; // <-- Added Import
+import VerifyOTP from "./pages/auth/VerifyOTP"; 
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import SkeletonLoader from "./components/SkeletonLoader";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -23,9 +23,19 @@ import DashboardHome from './pages/dashboard/DashboardHome';
 import AiAssistant from './pages/dashboard/AiAssistant';
 import Settings from './pages/dashboard/Settings';
 
+// New Reservation Pages
+import CustomerReservations from './pages/dashboard/CustomerReservations';
+import RestaurantReservations from './pages/dashboard/RestaurantReservations';
+
 import PublicMenu from "./pages/public/PublicMenu";
 import Checkout from "./pages/public/Checkout";
 import OrderTracking from "./pages/public/OrderTracking";
+
+// Dynamic component to route based on user role
+const ReservationsRouter = () => {
+  const { user } = useAuthStore();
+  return user?.role === 'restaurant' ? <RestaurantReservations /> : <CustomerReservations />;
+};
 
 function App() {
   const { fetchUser, isAuthenticated } = useAuthStore();
@@ -93,7 +103,7 @@ function App() {
         <Route path="/checkout/:slug" element={<Checkout />} />
         <Route path="/tracking/:slug/:orderId" element={<OrderTracking />} />
 
-        {/* Google OAuth Callback Catcher - FIX: Changed dash to slash */}
+        {/* Google OAuth Callback Catcher */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         {/* Protected Dashboard Routes */}
@@ -110,6 +120,7 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="ai" element={<AiAssistant />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="reservations" element={<ReservationsRouter />} /> {/* <-- Added Reservations Route */}
           <Route path="*" element={<DashboardHome />} />
         </Route>
       </Routes>
