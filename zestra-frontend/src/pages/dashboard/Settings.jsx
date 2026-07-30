@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Mail, Shield, User, Lock, Store, MapPin, Phone, Loader2, Image as ImageIcon, Grid3X3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Shield, User, Lock, Store, MapPin, Phone, Loader2, Image as ImageIcon, Grid3X3, AlertTriangle, Trash2 } from 'lucide-react';
 import useAuthStore from '../../store/auth/useAuthStore';
 import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const Settings = () => {
+  const navigate = useNavigate();
   const { user, fetchUser } = useAuthStore();
   const { restaurant, fetchMyRestaurant, updateMyRestaurant } = useRestaurantStore();
 
@@ -25,6 +27,10 @@ const Settings = () => {
     description: '', address: '', contact_number: '', image_url: '', total_tables: 10
   });
   const [isRestSaving, setIsRestSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // --- 4. Modal State ---
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Always fetch fresh restaurant data when user ID changes
   useEffect(() => {
@@ -104,8 +110,30 @@ const Settings = () => {
 
     if (success) {
       await fetchMyRestaurant();
+      toast.success("Restaurant details updated!");
     }
     setIsRestSaving(false);
+  };
+
+  // Opens the custom modal
+  const handleDeleteRestaurantClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  // Executes the actual deletion
+  const confirmDeleteRestaurant = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete('/restaurants/me', { data: { confirm: true } });
+      toast.success("Restaurant deleted successfully.");
+      await fetchUser(); 
+      navigate('/dashboard/onboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete restaurant");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false); // Close modal on finish
+    }
   };
 
   return (
@@ -142,7 +170,7 @@ const Settings = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Full Name</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Full Name</label>
               <input 
                 type="text" 
                 value={fullName}
@@ -152,7 +180,7 @@ const Settings = () => {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Email Address</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Email Address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-(--text-muted)/70" />
@@ -194,7 +222,7 @@ const Settings = () => {
           
           <form onSubmit={handleChangePassword} className="space-y-6 max-w-md relative z-10">
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Current Password</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Current Password</label>
               <input 
                 type="password" 
                 required
@@ -204,7 +232,7 @@ const Settings = () => {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">New Password</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">New Password</label>
               <input 
                 type="password" 
                 required
@@ -215,7 +243,7 @@ const Settings = () => {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Confirm New Password</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Confirm New Password</label>
               <input 
                 type="password" 
                 required
@@ -240,7 +268,7 @@ const Settings = () => {
       )}
 
       {/* SECTION 3: Restaurant Profile */}
-      {user?.role === 'restaurant' && (
+      {user?.role === 'restaurant' && currentRestaurant && (
         <section className="bg-(--surface) rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden p-6 sm:p-10 relative">
           <div className="absolute top-0 right-0 w-72 h-72 bg-amber-500/5 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20"></div>
 
@@ -257,7 +285,7 @@ const Settings = () => {
           <form onSubmit={handleUpdateRestaurant} className="space-y-6 sm:space-y-8 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               <div className="md:col-span-2">
-                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Description</label>
+                <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Description</label>
                 <textarea 
                   rows="3"
                   value={restDetails.description}
@@ -268,7 +296,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Address</label>
+                <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <MapPin className="h-5 w-5 text-(--text-muted)/70" />
@@ -284,7 +312,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Contact Number</label>
+                <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Contact Number</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Phone className="h-5 w-5 text-(--text-muted)/70" />
@@ -300,7 +328,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Cover Image URL</label>
+                <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Cover Image URL</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <ImageIcon className="h-5 w-5 text-(--text-muted)/70" />
@@ -316,7 +344,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Total Table Capacity</label>
+                <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2 items-center justify-between">Total Table Capacity</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Grid3X3 className="h-5 w-5 text-(--text-muted)/70" />
@@ -347,6 +375,71 @@ const Settings = () => {
           </form>
         </section>
       )}
+
+      {/* SECTION 4: Danger Zone (Delete Restaurant) */}
+      {user?.role === 'restaurant' && currentRestaurant && (
+        <section className="bg-(--surface) rounded-4xl border border-red-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden p-6 sm:p-10 relative mt-8">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-red-500/5 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20"></div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+            <div>
+              <h3 className="text-xl font-black text-red-500 flex items-center gap-3 tracking-tight mb-2">
+                <div className="w-10 h-10 rounded-[14px] bg-red-100 flex items-center justify-center text-red-600 border border-red-200/50 shadow-sm">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                Danger Zone
+              </h3>
+              <p className="text-sm font-medium text-(--text-secondary) max-w-md">
+                Permanently delete your restaurant profile, menu, and inventory. This action cannot be undone.
+              </p>
+            </div>
+            
+            <button 
+              onClick={handleDeleteRestaurantClick}
+              disabled={isDeleting}
+              className="w-full sm:w-auto px-6 py-3.5 bg-red-50 hover:bg-red-500 hover:text-white text-red-600 font-black text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 border border-red-200 hover:border-red-500 shadow-sm active:scale-95 disabled:opacity-70 shrink-0"
+            >
+              <Trash2 className="w-5 h-5" /> Delete Restaurant
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-(--surface) rounded-4xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-(--border)/60 scale-in zoom-in-95 duration-200 relative">
+            
+            <div className="w-20 h-20 bg-red-100 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-red-200">
+              <AlertTriangle className="w-10 h-10" />
+            </div>
+            
+            <h3 className="text-2xl font-black text-(--text) text-center mb-3 tracking-tight">Delete Restaurant?</h3>
+            <p className="text-(--text-secondary) font-medium text-center mb-8">
+              This action is <span className="font-bold text-red-500">permanent</span>. All your menu items, inventory, and analytics will be erased completely.
+            </p>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 py-4 bg-(--background) hover:bg-(--surface-secondary) border-2 border-(--border) text-(--text) font-black rounded-2xl transition-all active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteRestaurant}
+                disabled={isDeleting}
+                className="flex-1 py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-2xl transition-all shadow-[0_8px_20px_rgba(239,68,68,0.25)] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 border border-red-400"
+              >
+                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Yes, Delete'}
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
