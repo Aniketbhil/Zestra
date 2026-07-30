@@ -51,8 +51,13 @@ const OrderTracking = () => {
     );
   }
 
-  // Workflow stages mapped perfectly to your new payment flow
-  const stages = [
+  // FIX 1: We only consider it an "Online Payment" (3-track flow) if the payment actually succeeded
+  // and attached a razorpay_payment_id. If it failed and they pay at counter, this will be null,
+  // falling back perfectly to the 4-track counter flow!
+  const isOnlinePayment = !!order.razorpay_payment_id;
+
+  // Base workflow stages
+  const allStages = [
     {
       key: 'received',
       title: 'Awaiting Payment',
@@ -91,14 +96,14 @@ const OrderTracking = () => {
     }
   ];
 
+  // If paid online successfully, remove the "Awaiting Payment" step completely
+  const stages = isOnlinePayment 
+    ? allStages.filter(stage => stage.key !== 'received') 
+    : allStages;
+
   const getStageIndex = (status) => {
-    switch (status) {
-      case 'received': return 0;
-      case 'preparing': return 1;
-      case 'ready': return 2;
-      case 'served': return 3;
-      default: return 0;
-    }
+    const idx = stages.findIndex(s => s.key === status);
+    return idx !== -1 ? idx : 0; 
   };
 
   const currentStageIdx = getStageIndex(order.status);
@@ -147,7 +152,7 @@ const OrderTracking = () => {
             <h2 className="text-3xl font-black text-(--text) tracking-tight relative z-10">{currentStage.title}</h2>
             <p className="text-base font-medium text-(--text-secondary) mt-2 max-w-sm relative z-10">{currentStage.description}</p>
             
-            {order.status === 'received' && (
+            {order.status === 'received' && !isOnlinePayment && (
                <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold shadow-sm relative z-10 animate-bounce">
                  <Banknote className="w-4 h-4" /> Please pay at the counter now
                </div>
@@ -171,13 +176,14 @@ const OrderTracking = () => {
                 className="absolute left-9 top-4 w-0.75 bg-linear-to-b from-blue-400 via-emerald-400 to-purple-400 rounded-full transition-all duration-1000 ease-in-out z-0" 
                 style={{ 
                   height: `${(currentStageIdx / (stages.length - 1)) * 100}%`,
-                  bottom: '1rem' // Prevents overflow
+                  bottom: '1rem' 
                 }}
               ></div>
 
               {stages.map((stage, idx) => {
-                const isPassed = currentStageIdx > idx;
-                const isCurrent = currentStageIdx === idx;
+                // FIX 2: If the status is served, instantly mark it as passed/completed. No timers.
+                const isPassed = currentStageIdx > idx || (stage.key === 'served' && isFinalStage);
+                const isCurrentActive = currentStageIdx === idx && stage.key !== 'served';
                 const Icon = stage.icon;
 
                 return (
@@ -185,25 +191,34 @@ const OrderTracking = () => {
                     <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 border-[3px] transition-all duration-500 ease-out ${
                       isPassed 
                         ? 'bg-(--text) border-(--text) text-(--background) shadow-md scale-110' 
-                        : isCurrent 
+                        : isCurrentActive 
                           ? `${stage.activeBg} ${stage.borderColor} ${stage.activeColor} ring-4 ring-current/20 scale-125`
                           : 'bg-(--surface) border-(--border) text-(--text-muted)'
                     }`}>
                       {isPassed ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
 
-                    <div className={`pt-1 flex-1 transition-all duration-500 ${isCurrent ? 'translate-x-1 sm:translate-x-2' : ''}`}>
+                    <div className={`pt-1 flex-1 transition-all duration-500 ${isCurrentActive ? 'translate-x-1 sm:translate-x-2' : ''}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
-                        <h4 className={`font-black text-base sm:text-lg tracking-tight ${isCurrent ? 'text-(--text)' : isPassed ? 'text-(--text)' : 'text-(--text-muted)'}`}>
+                        <h4 className={`font-black text-base sm:text-lg tracking-tight ${isCurrentActive || isPassed ? 'text-(--text)' : 'text-(--text-muted)'}`}>
                           {stage.title}
                         </h4>
-                        {isCurrent && (
+                        
+                        {/* Only show "In Progress" if it is actively running and NOT served */}
+                        {isCurrentActive && (
                           <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider bg-(--text) text-(--background) px-2.5 py-1 rounded-md shadow-sm self-start sm:self-auto">
                             In Progress
                           </span>
                         )}
+                        
+                        {/* Show "Completed" instantly when Served is hit */}
+                        {isPassed && stage.key === 'served' && (
+                          <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-md shadow-sm self-start sm:self-auto">
+                            Completed
+                          </span>
+                        )}
                       </div>
-                      <p className={`text-xs sm:text-sm mt-1 font-medium leading-relaxed pr-2 ${isCurrent ? 'text-(--text-secondary)' : 'text-(--text-muted)'}`}>
+                      <p className={`text-xs sm:text-sm mt-1 font-medium leading-relaxed pr-2 ${isCurrentActive ? 'text-(--text-secondary)' : 'text-(--text-muted)'}`}>
                         {stage.description}
                       </p>
                     </div>
@@ -213,11 +228,11 @@ const OrderTracking = () => {
             </div>
           </div>
 
-          {/* Download Bill PDF Button - ONLY APPEARS AT THE VERY END */}
+          {/* Download Bill PDF Button - Now appears INSTANTLY when served */}
           {isFinalStage && (
             <button 
               onClick={handleDownloadBill}
-              className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-lg py-5 rounded-3xl shadow-[0_10px_30px_rgba(147,51,234,0.3)] transition-all active:scale-95 hover:-translate-y-1 flex items-center justify-center gap-3 border border-purple-500/50"
+              className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-lg py-5 rounded-3xl shadow-[0_10px_30px_rgba(147,51,234,0.3)] transition-all active:scale-95 hover:-translate-y-1 flex items-center justify-center gap-3 border border-purple-500/50 animate-in zoom-in duration-500"
             >
               <Download className="w-6 h-6" /> Download Bill (PDF)
             </button>
@@ -226,7 +241,7 @@ const OrderTracking = () => {
         </main>
       </div>
 
-      {/* PRINT-ONLY RECEIPT TEMPLATE (Generates crisp PDF natively) */}
+      {/* PRINT-ONLY RECEIPT TEMPLATE */}
       <div className="hidden print:block max-w-md mx-auto p-8 font-mono text-black bg-white">
         <div className="text-center border-b-2 border-dashed border-gray-300 pb-6 mb-6">
           <h1 className="text-3xl font-bold uppercase tracking-widest mb-1">ZESTRA</h1>
@@ -235,6 +250,7 @@ const OrderTracking = () => {
             <p><strong>Order ID:</strong> {order.id}</p>
             <p><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
             <p><strong>Status:</strong> PAID IN FULL</p>
+            <p><strong>Method:</strong> {isOnlinePayment ? 'Online (Razorpay)' : 'Counter'}</p>
           </div>
         </div>
 
@@ -249,7 +265,6 @@ const OrderTracking = () => {
             return (
               <div key={i} className="grid grid-cols-12 gap-2 text-sm items-start">
                 <span className="col-span-7 pr-2 wrap-break-word">
-                  {/* Dynamically render item.name from the backend schema[cite: 1] */}
                   {item.name || `Menu Item (${item.menu_item_id.slice(0, 6)})`}
                 </span>
                 <span className="col-span-2 text-right font-medium">x{item.quantity}</span>
