@@ -36,8 +36,8 @@ const Register = () => {
 
     const success = await register(email, password, role, formattedPhone);
     if (success) {
-      // Redirect to OTP Verification page and pass the email in state
-      navigate('/verify-otp', { state: { email } });
+      // Redirect to OTP Verification page and pass BOTH email and phone in state
+      navigate('/verify-otp', { state: { email, phone: formattedPhone } });
     }
   };
 

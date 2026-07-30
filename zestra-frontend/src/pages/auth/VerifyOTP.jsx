@@ -8,10 +8,16 @@ const VerifyOTP = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const email = location.state?.email;
+  const originalPhone = location.state?.phone;
 
   const { verifyOtp, resendOtp, isLoading } = useAuthStore();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [resendCooldown, setResendCooldown] = useState(60);
+  
+  // Manage dynamic UI state for where the code was sent
+  const [sentTarget, setSentTarget] = useState(originalPhone ? 'phone no.' : 'email');
+  const [targetValue, setTargetValue] = useState(originalPhone ? originalPhone : email);
+  
   const inputRefs = useRef([]);
 
   // If there's no email in state, they shouldn't be here. Send them to register.
@@ -74,7 +80,8 @@ const VerifyOTP = () => {
 
     const success = await verifyOtp(email, otpString);
     if (success) {
-      navigate('/dashboard', { replace: true });
+      // Redirect strictly to Login page upon successful verification
+      navigate('/login', { replace: true });
     }
   };
 
@@ -84,6 +91,9 @@ const VerifyOTP = () => {
     const success = await resendOtp(email);
     if (success) {
       setResendCooldown(60); // Reset timer to 60 seconds
+      // Force UI to show it was sent to email (since SMS costs money)
+      setSentTarget('email');
+      setTargetValue(email);
     }
   };
 
@@ -102,10 +112,12 @@ const VerifyOTP = () => {
           <div className="w-20 h-20 bg-linear-to-br from-(--primary)/20 to-(--primary)/5 rounded-3xl border border-(--primary)/20 flex items-center justify-center mb-6 shadow-inner">
             <ShieldCheck className="w-10 h-10 text-(--primary)" />
           </div>
-          <h1 className="text-3xl font-black text-(--text) mb-2 tracking-tight">Check your email</h1>
+          <h1 className="text-3xl font-black text-(--text) mb-2 tracking-tight">
+            Check your {sentTarget === 'email' ? 'email' : 'phone'}
+          </h1>
           <p className="text-(--text-secondary) font-medium text-sm">
-            We sent a 6-digit verification code to<br/>
-            <span className="font-bold text-(--text) block mt-1">{email}</span>
+            We sent a 6-digit verification code to your {sentTarget}<br/>
+            <span className="font-bold text-(--text) block mt-1">{targetValue}</span>
           </p>
         </div>
 

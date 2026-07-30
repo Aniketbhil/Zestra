@@ -29,17 +29,15 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // Register Action - Updated to accept phone_number
+  // Register Action
   register: async (email, password, role, phone_number) => {
     set({ isLoading: true });
     try {
       // API call creates the unverified account and triggers the OTP email/SMS.
-      // NO tokens are returned or stored here.
       await api.post('/auth/register', { email, password, role, phone_number });
       
-      toast.success('Account created! Please check for your OTP code.');
       set({ isLoading: false });
-      return true;
+      return true; // We removed the toast here since VerifyOTP handles the UI feedback
     } catch (error) {
       toast.error(error.response?.data?.detail?.[0]?.msg || error.response?.data?.detail || 'Registration failed.');
       set({ isLoading: false });
@@ -51,19 +49,17 @@ const useAuthStore = create((set) => ({
   verifyOtp: async (email, otp) => {
     set({ isLoading: true });
     try {
-      const response = await api.post('/auth/verify-otp', { email, otp });
-      const { access_token, refresh_token } = response.data;
+      await api.post('/auth/verify-otp', { email, otp });
       
-      // Store tokens ONLY after successful verification
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
+      // We intentionally DO NOT store tokens here anymore, 
+      // ensuring the user is forced to the manual Login page.
       
-      await useAuthStore.getState().fetchUser();
-      
-      toast.success('Account verified successfully!');
+      toast.success('Account verified successfully! Please log in.');
+      set({ isLoading: false });
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Invalid OTP. Please try again.');
+      // Exact error message requested
+      toast.error('OTP is incorrect Try Again');
       set({ isLoading: false });
       return false;
     }
