@@ -54,30 +54,30 @@ const PublicMenu = () => {
 
   return (
     <div className="min-h-screen bg-(--background) pb-32 font-sans selection:bg-(--primary) selection:text-white">
-      {/* Restaurant Header - Upgraded with Glassmorphism & Back Button */}
-      <header className="bg-(--background)/80 backdrop-blur-xl pt-8 pb-4 px-4 shadow-sm sticky top-0 z-40 border-b border-(--border)/50 transition-all">
+      {/* Restaurant Header - Mobile Optimized Glassmorphism */}
+      <header className="bg-(--background)/80 backdrop-blur-xl pt-4 sm:pt-8 pb-2 sm:pb-4 px-4 shadow-sm sticky top-0 z-40 border-b border-(--border)/50 transition-all">
         <div className="max-w-5xl mx-auto relative">
           
           {/* Back to Dashboard Button */}
           <Link 
             to="/dashboard" 
-            className="absolute left-0 top-0 sm:top-2 w-10 h-10 bg-(--surface) hover:bg-(--surface-secondary) border border-(--border) rounded-xl flex items-center justify-center text-(--text) transition-colors active:scale-95 shadow-sm z-10"
+            className="absolute left-0 top-0 sm:top-2 w-8 h-8 sm:w-10 sm:h-10 bg-(--surface) hover:bg-(--surface-secondary) border border-(--border) rounded-[10px] sm:rounded-xl flex items-center justify-center text-(--text) transition-colors active:scale-95 shadow-sm z-10"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Link>
 
-          <div className="text-center pt-10 sm:pt-0">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-linear-to-br from-(--primary)/20 to-(--primary)/5 text-(--primary) mb-4 border border-(--primary)/10 shadow-sm">
-              <UtensilsCrossed className="w-7 h-7" />
+          <div className="text-center pt-8 sm:pt-0">
+            <div className="inline-flex items-center justify-center w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-linear-to-br from-(--primary)/20 to-(--primary)/5 text-(--primary) mb-2 sm:mb-4 border border-(--primary)/10 shadow-sm">
+              <UtensilsCrossed className="w-5 h-5 sm:w-7 sm:h-7" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight px-4">{restaurantName || 'Restaurant Menu'}</h1>
-            <p className="text-(--text-secondary) font-medium text-sm sm:text-base mt-2 px-2">Scan, choose, and order directly from your table</p>
+            <h1 className="text-xl sm:text-4xl font-black text-(--text) tracking-tight px-4">{restaurantName || 'Restaurant Menu'}</h1>
+            <p className="text-(--text-secondary) font-medium text-xs sm:text-base mt-1 sm:mt-2 px-2">Scan, choose, and order directly from your table</p>
           </div>
         </div>
 
         {/* Category Filter Pills - Horizontally Scrollable */}
         {categories.length > 0 && (
-          <div className="max-w-5xl mx-auto mt-8 flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-none px-2 mask-linear-fade">
+          <div className="max-w-5xl mx-auto mt-4 sm:mt-8 flex items-center gap-2 sm:gap-3 overflow-x-auto pb-3 sm:pb-4 scrollbar-none px-2 mask-linear-fade">
             <button
               onClick={() => setActiveCategory('All')}
               className={`px-5 py-2 sm:px-6 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 ${
