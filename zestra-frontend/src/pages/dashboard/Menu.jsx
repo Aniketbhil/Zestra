@@ -158,7 +158,7 @@ const Menu = () => {
                         {item.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-black text-lg text-(--text)">${parseFloat(item.price).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-black text-lg text-(--text)">₹{parseFloat(item.price).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm border ${item.is_available ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
                         {item.is_available ? 'Available' : 'Sold Out'}
@@ -214,7 +214,7 @@ const Menu = () => {
                   <input required type="text" name="category" value={formData.category} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-medium focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--text) transition-all placeholder:text-(--text-muted)/50" placeholder="e.g. Mains" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Price ($)</label>
+                  <label className="block text-xs font-black text-(--text-secondary) uppercase tracking-wider mb-2">Price (₹)</label>
                   <input required type="number" step="0.01" min="0" name="price" value={formData.price} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-(--background) border-2 border-(--border)/60 rounded-2xl font-black text-lg focus:outline-none focus:border-(--primary) focus:ring-4 focus:ring-(--primary)/10 text-(--primary) transition-all placeholder:text-(--text-muted)/50 placeholder:font-medium placeholder:text-base" placeholder="0.00" />
                 </div>
               </div>

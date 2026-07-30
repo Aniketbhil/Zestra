@@ -78,7 +78,7 @@ const Orders = () => {
               {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </p>
           </div>
-          <span className="font-black text-lg text-(--primary) tracking-tight">${parseFloat(order.total).toFixed(2)}</span>
+          <span className="font-black text-lg text-(--primary) tracking-tight">₹{parseFloat(order.total).toFixed(2)}</span>
         </div>
 
         {/* Order Items Box (Digital Receipt Look) */}

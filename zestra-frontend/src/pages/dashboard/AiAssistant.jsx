@@ -45,8 +45,8 @@ const AiAssistant = () => {
     // 2. Wrap important values and keywords in colorful HTML badges
     return rawItems.map(sentence => {
       let formatted = sentence
-        // Highlight Revenue & Money (e.g., $434.05)
-        .replace(/(\$\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="text-emerald-700 font-extrabold bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm">$1</span>')
+        // Highlight Revenue & Money (e.g., ₹434.05)
+        .replace(/((?:₹|\$)\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span class="text-emerald-700 font-extrabold bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm">$1</span>')
         // Highlight Times & Peak Hours (e.g., 18:00, 7:00 PM)
         .replace(/\b((?:1[0-2]|0?[1-9])(?::[0-5][0-9])?\s*[AaPp][Mm]|(?:[01][0-9]|2[0-3]):[0-5][0-9])\b/g, '<span class="text-amber-700 font-extrabold bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 shadow-sm">$1</span>')
         // Keyword Accent: Sales & Revenue

@@ -140,7 +140,7 @@ const DashboardHome = () => {
             </div>
           </div>
           <h3 className="text-4xl sm:text-5xl font-black text-(--text) tracking-tight relative z-10">
-            ${parseFloat(todayRevenue).toFixed(2)}
+            ₹{parseFloat(todayRevenue).toFixed(2)}
           </h3>
         </div>
 
@@ -288,7 +288,7 @@ const DashboardHome = () => {
                         Order #{order.order_id?.split("-")[0] || order.id.split("-")[0]}
                       </div>
                       <div className="text-xs font-medium text-(--text-secondary) mt-0.5">
-                        {order.items.length} items • <span className="text-(--primary) font-bold">${parseFloat(order.total).toFixed(2)}</span>
+                        {order.items.length} items • <span className="text-(--primary) font-bold">₹{parseFloat(order.total).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

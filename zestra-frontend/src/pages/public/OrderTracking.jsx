@@ -268,7 +268,7 @@ const OrderTracking = () => {
                   {item.name || `Menu Item (${item.menu_item_id.slice(0, 6)})`}
                 </span>
                 <span className="col-span-2 text-right font-medium">x{item.quantity}</span>
-                <span className="col-span-3 text-right font-medium">${lineTotal.toFixed(2)}</span>
+                <span className="col-span-3 text-right font-medium">₹{lineTotal.toFixed(2)}</span>
               </div>
             );
           })}
@@ -277,7 +277,7 @@ const OrderTracking = () => {
         <div className="border-t-2 border-dashed border-gray-300 pt-4 text-lg">
           <div className="flex justify-between font-bold">
             <span>TOTAL:</span>
-            <span>${parseFloat(order.total || 0).toFixed(2)}</span>
+            <span>₹{parseFloat(order.total || 0).toFixed(2)}</span>
           </div>
         </div>
 

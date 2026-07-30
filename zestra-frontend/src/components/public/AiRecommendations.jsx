@@ -48,7 +48,7 @@ const AiRecommendations = ({ slug, onAddToCart }) => {
 
             <div className="flex justify-between items-start mb-3 relative z-10">
               <h3 className="font-bold text-(--text) text-lg truncate pr-2 tracking-tight">{item.name}</h3>
-              <span className="font-black text-purple-600 text-lg">${parseFloat(item.price).toFixed(2)}</span>
+              <span className="font-black text-purple-600 text-lg">₹{parseFloat(item.price).toFixed(2)}</span>
             </div>
             
             <p className="text-sm font-medium text-(--text-secondary) line-clamp-2 mb-6 h-10 relative z-10 leading-relaxed">

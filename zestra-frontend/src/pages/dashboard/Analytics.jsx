@@ -124,7 +124,7 @@ const Analytics = () => {
             </div>
           </div>
           <h3 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight relative z-10">
-            ${parseFloat(analyticsData?.total_sales || 0).toFixed(2)}
+            ₹{parseFloat(analyticsData?.total_sales || 0).toFixed(2)}
           </h3>
         </div>
 

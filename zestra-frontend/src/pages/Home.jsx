@@ -175,7 +175,7 @@ const Home = () => {
                 </div>
                 <div>
                   <p className="text-base font-black text-gray-900 tracking-tight">Table 4</p>
-                  <p className="text-sm font-bold text-gray-500 mt-0.5">3 items • <span className="text-gray-900">$42.50</span></p>
+                  <p className="text-sm font-bold text-gray-500 mt-0.5">3 items • <span className="text-gray-900">₹42.50</span></p>
                 </div>
               </div>
             </div>

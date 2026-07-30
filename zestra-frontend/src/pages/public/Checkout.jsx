@@ -244,7 +244,7 @@ const Checkout = () => {
                     <span className="font-black text-(--background) bg-(--text) px-2.5 py-1 rounded-lg text-xs shadow-sm shrink-0">{item.quantity}x</span>
                     <span className="font-bold text-(--text) text-base line-clamp-2">{item.name}</span>
                   </div>
-                  <span className="font-black text-(--text-secondary) text-base shrink-0">${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                  <span className="font-black text-(--text-secondary) text-base shrink-0">₹{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -252,7 +252,7 @@ const Checkout = () => {
             {/* Total Highlight Box */}
             <div className="bg-(--background) border border-(--border) rounded-[20px] p-5 flex justify-between items-center shadow-inner">
               <span className="font-bold text-lg text-(--text)">Total Amount</span>
-              <span className="font-black text-2xl text-(--primary) tracking-tight">${cartTotal.toFixed(2)}</span>
+              <span className="font-black text-2xl text-(--primary) tracking-tight">₹{cartTotal.toFixed(2)}</span>
             </div>
           </div>
         )}

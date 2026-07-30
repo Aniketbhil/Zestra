@@ -148,7 +148,7 @@ const PublicMenu = () => {
                         <div>
                           <div className="flex justify-between items-start gap-2 mb-1">
                             <h3 className="font-bold text-(--text) text-base sm:text-lg tracking-tight truncate">{item.name}</h3>
-                            <span className="font-black text-(--primary) text-base sm:text-lg shrink-0">${parseFloat(item.price).toFixed(2)}</span>
+                            <span className="font-black text-(--primary) text-base sm:text-lg shrink-0">₹{parseFloat(item.price).toFixed(2)}</span>
                           </div>
                           {item.description && (
                             <p className="text-xs sm:text-sm font-medium text-(--text-muted) line-clamp-2 leading-relaxed pr-1">{item.description}</p>
@@ -214,7 +214,7 @@ const PublicMenu = () => {
                 <span className="font-bold text-sm sm:text-base">Checkout</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 font-black text-base sm:text-lg shrink-0">
-                ${cartTotal.toFixed(2)}
+                ₹{cartTotal.toFixed(2)}
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 flex items-center justify-center">
                   <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
