@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from app.models.order import OrderStatus
+from app.models.order import OrderStatus, PaymentStatus
 
 
 class OrderItemCreate(BaseModel):
@@ -35,6 +35,9 @@ class OrderResponse(BaseModel):
     restaurant_id: UUID
     customer_id: UUID | None = None
     status: OrderStatus
+    payment_status: PaymentStatus = PaymentStatus.PENDING
+    razorpay_order_id: str | None = None
+    razorpay_payment_id: str | None = None
     total: Decimal
     created_at: datetime
     items: list[OrderItemResponse] = []
@@ -52,6 +55,9 @@ class CustomerOrderResponse(BaseModel):
     restaurant_name: str | None = None
     customer_id: UUID | None = None
     status: OrderStatus
+    payment_status: PaymentStatus = PaymentStatus.PENDING
+    razorpay_order_id: str | None = None
+    razorpay_payment_id: str | None = None
     total: Decimal
     created_at: datetime
     items: list[OrderItemResponse] = []

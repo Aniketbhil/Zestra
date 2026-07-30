@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Integer, Numeric, UUID
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Integer, Numeric, String, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -20,6 +20,12 @@ class OrderStatus(str, enum.Enum):
     PREPARING = "preparing"
     READY = "ready"
     SERVED = "served"
+
+
+class PaymentStatus(str, enum.Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    FAILED = "failed"
 
 
 class Order(Base):
@@ -50,6 +56,23 @@ class Order(Base):
         ),
         default=OrderStatus.RECEIVED,
         nullable=False,
+    )
+    payment_status: Mapped[PaymentStatus] = mapped_column(
+        SQLEnum(
+            PaymentStatus,
+            name="payment_status_enum",
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        default=PaymentStatus.PENDING,
+        nullable=False,
+    )
+    razorpay_order_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    razorpay_payment_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
     )
     total: Mapped[Decimal] = mapped_column(
         Numeric(10, 2),

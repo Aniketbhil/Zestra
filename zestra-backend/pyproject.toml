@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart==0.0.32",
     "python-socketio==5.16.3",
     "qrcode[pil]==8.2",
+    "razorpay>=2.0.1",
     "redis==5.3.1",
     "sqlalchemy[asyncio]==2.0.51",
     "uvicorn[standard]==0.51.0",
