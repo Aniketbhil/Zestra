@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text, UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.inventory_item import InventoryItem
     from app.models.menu_item import MenuItem
     from app.models.order import Order
+    from app.models.table import Table
     from app.models.user import User
 
 
@@ -22,11 +23,11 @@ class Restaurant(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
-    owner_id: Mapped[uuid.UUID] = mapped_column(
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         unique=True,
-        nullable=False,
+        nullable=True,
     )
     name: Mapped[str] = mapped_column(
         String(255),
@@ -54,6 +55,11 @@ class Restaurant(Base):
         JSON,
         nullable=True,
     )
+    total_tables: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=10,
+    )
     new_order_notifications_enabled: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -62,6 +68,11 @@ class Restaurant(Base):
     image_url: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
+    )
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -78,5 +89,8 @@ class Restaurant(Base):
     )
     inventory_items: Mapped[list["InventoryItem"]] = relationship(
         "InventoryItem", back_populates="restaurant", cascade="all, delete-orphan"
+    )
+    tables: Mapped[list["Table"]] = relationship(
+        "Table", back_populates="restaurant", cascade="all, delete-orphan"
     )
 

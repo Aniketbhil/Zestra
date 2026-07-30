@@ -8,7 +8,10 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.restaurant import Restaurant
+from app.models.table import Table
+from app.models.user import AuthProvider, User, UserRole
 from app.services.restaurant import generate_base_slug
+from app.services.security import create_access_token
 
 TEST_SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -37,6 +40,24 @@ def setup_dependency_override():
 client = TestClient(app)
 
 
+async def create_test_user(email: str, role: UserRole) -> tuple[User, dict[str, str]]:
+    async with TestingSessionLocal() as session:
+        user = User(
+            email=email,
+            auth_provider=AuthProvider.LOCAL,
+            role=role,
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+        token = create_access_token({"sub": str(user.id)})
+        headers = {"Authorization": f"Bearer {token}"}
+        return user, headers
+
+
 def test_generate_base_slug_utility():
     assert generate_base_slug("Delicious Burger & Grill!") == "delicious-burger-grill"
     assert generate_base_slug("  Pizzeria   Extra   ") == "pizzeria-extra"
@@ -46,28 +67,17 @@ def test_generate_base_slug_utility():
 
 
 @pytest.mark.asyncio
-async def test_onboard_restaurant_success():
+async def test_onboard_restaurant_success_and_tables_created():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # 1. Register restaurant user
-    reg_resp = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "owner@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    assert reg_resp.status_code == 201
-    tokens = reg_resp.json()
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    user, headers = await create_test_user("owner@restaurant.com", UserRole.RESTAURANT)
 
-    # 2. Onboard restaurant
     payload = {
         "name": "The Gourmet Bistro",
         "description": "Fine dining restaurant",
         "address": "123 Main Street, Cityville",
+        "total_tables": 5,
     }
     response = client.post(
         "/api/v1/restaurants/onboard",
@@ -80,8 +90,23 @@ async def test_onboard_restaurant_success():
     assert data["slug"] == "the-gourmet-bistro"
     assert data["description"] == "Fine dining restaurant"
     assert data["address"] == "123 Main Street, Cityville"
+    assert data["total_tables"] == 5
     assert "id" in data
     assert "owner_id" in data
+
+    # Verify tables 1..5 created in database
+    async with TestingSessionLocal() as session:
+        res = await session.execute(
+            Base.metadata.tables["tables"].select().where(
+                Base.metadata.tables["tables"].c.restaurant_id == data["id"]
+            )
+        )
+        table_rows = res.fetchall()
+        assert len(table_rows) == 5
+        table_numbers = sorted([row.table_number for row in table_rows])
+        assert table_numbers == [1, 2, 3, 4, 5]
+        for row in table_rows:
+            assert row.capacity == 4
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -92,17 +117,7 @@ async def test_onboard_restaurant_unique_slug_suffix():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # 1. Register and onboard first restaurant user
-    r1 = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "owner1@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    tokens1 = r1.json()
-    h1 = {"Authorization": f"Bearer {tokens1['access_token']}"}
+    u1, h1 = await create_test_user("owner1@restaurant.com", UserRole.RESTAURANT)
     resp1 = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "Tasty Bites"},
@@ -111,17 +126,7 @@ async def test_onboard_restaurant_unique_slug_suffix():
     assert resp1.status_code == 201
     assert resp1.json()["slug"] == "tasty-bites"
 
-    # 2. Register and onboard second restaurant user with same name
-    r2 = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "owner2@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    tokens2 = r2.json()
-    h2 = {"Authorization": f"Bearer {tokens2['access_token']}"}
+    u2, h2 = await create_test_user("owner2@restaurant.com", UserRole.RESTAURANT)
     resp2 = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "Tasty Bites"},
@@ -130,17 +135,7 @@ async def test_onboard_restaurant_unique_slug_suffix():
     assert resp2.status_code == 201
     assert resp2.json()["slug"] == "tasty-bites-1"
 
-    # 3. Register and onboard third restaurant user with same name
-    r3 = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "owner3@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    tokens3 = r3.json()
-    h3 = {"Authorization": f"Bearer {tokens3['access_token']}"}
+    u3, h3 = await create_test_user("owner3@restaurant.com", UserRole.RESTAURANT)
     resp3 = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "Tasty Bites"},
@@ -158,19 +153,8 @@ async def test_onboard_restaurant_duplicate_user_rejected():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # 1. Register restaurant user
-    reg = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "dupeowner@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    tokens = reg.json()
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    user, headers = await create_test_user("dupeowner@restaurant.com", UserRole.RESTAURANT)
 
-    # 2. First onboard succeeds
     resp1 = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "First Restaurant"},
@@ -178,7 +162,6 @@ async def test_onboard_restaurant_duplicate_user_rejected():
     )
     assert resp1.status_code == 201
 
-    # 3. Second onboard fails for same user
     resp2 = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "Second Restaurant"},
@@ -196,17 +179,7 @@ async def test_onboard_restaurant_customer_role_forbidden():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Register customer user
-    reg = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "customer@user.com",
-            "password": "ValidP@ssword123",
-            "role": "customer",
-        },
-    )
-    tokens = reg.json()
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    user, headers = await create_test_user("customer@user.com", UserRole.CUSTOMER)
 
     resp = client.post(
         "/api/v1/restaurants/onboard",
@@ -234,18 +207,8 @@ async def test_onboard_restaurant_invalid_input():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    reg = client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "invalidinput@restaurant.com",
-            "password": "ValidP@ssword123",
-            "role": "restaurant",
-        },
-    )
-    tokens = reg.json()
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    user, headers = await create_test_user("invalidinput@restaurant.com", UserRole.RESTAURANT)
 
-    # Empty name
     resp = client.post(
         "/api/v1/restaurants/onboard",
         json={"name": "   "},

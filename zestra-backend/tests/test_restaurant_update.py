@@ -164,3 +164,96 @@ async def test_update_restaurant_me_customer_forbidden():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_update_restaurant_me_expand_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # 1. Onboard restaurant with 5 tables
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="expand_tables_owner@example.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(owner)
+        await session.commit()
+        owner_id = owner.id
+
+    token = create_access_token({"sub": str(owner_id)})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post(
+        "/api/v1/restaurants/onboard",
+        json={"name": "Expand Bistro", "total_tables": 5},
+        headers=headers,
+    )
+
+    # 2. Expand tables to 8
+    patch_res = client.patch(
+        "/api/v1/restaurants/me",
+        json={"total_tables": 8, "description": "Expanded bistro"},
+        headers=headers,
+    )
+    assert patch_res.status_code == 200
+    patch_data = patch_res.json()
+    assert patch_data["total_tables"] == 8
+    assert patch_data["description"] == "Expanded bistro"
+
+    # 3. Verify tables 1..8 exist in DB
+    async with TestingSessionLocal() as session:
+        res = await session.execute(
+            Base.metadata.tables["tables"].select().where(
+                Base.metadata.tables["tables"].c.restaurant_id == patch_data["id"]
+            )
+        )
+        tables = res.fetchall()
+        assert len(tables) == 8
+        table_numbers = sorted([t.table_number for t in tables])
+        assert table_numbers == [1, 2, 3, 4, 5, 6, 7, 8]
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_update_restaurant_me_shrink_tables_rejected():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="shrink_tables_owner@example.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(owner)
+        await session.commit()
+        owner_id = owner.id
+
+    token = create_access_token({"sub": str(owner_id)})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post(
+        "/api/v1/restaurants/onboard",
+        json={"name": "Shrink Bistro", "total_tables": 10},
+        headers=headers,
+    )
+
+    # Attempt to reduce tables from 10 to 5 -> 400 Bad Request
+    patch_res = client.patch(
+        "/api/v1/restaurants/me",
+        json={"total_tables": 5},
+        headers=headers,
+    )
+    assert patch_res.status_code == 400
+    assert patch_res.json()["detail"] == "Reducing total tables is not allowed."
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

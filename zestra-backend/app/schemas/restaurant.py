@@ -8,6 +8,7 @@ class RestaurantCreate(BaseModel):
     description: str | None = None
     address: str | None = None
     image_url: str | None = None
+    total_tables: int = Field(default=10, gt=0)
 
     @field_validator("name")
     @classmethod
@@ -24,6 +25,11 @@ class RestaurantUpdate(BaseModel):
     contact_number: str | None = Field(None, max_length=50)
     business_hours: dict[str, str] | None = None
     image_url: str | None = None
+    total_tables: int | None = Field(None, gt=0)
+
+
+class RestaurantDeleteRequest(BaseModel):
+    confirm: bool
 
 
 class RestaurantSettingsUpdate(BaseModel):
@@ -32,13 +38,14 @@ class RestaurantSettingsUpdate(BaseModel):
 
 class RestaurantResponse(BaseModel):
     id: UUID
-    owner_id: UUID
+    owner_id: UUID | None = None
     name: str
     slug: str
     description: str | None = None
     address: str | None = None
     contact_number: str | None = None
     business_hours: dict[str, str] | None = None
+    total_tables: int = 10
     new_order_notifications_enabled: bool = True
     image_url: str | None = None
     created_at: datetime
@@ -59,6 +66,7 @@ class PublicRestaurantResponse(BaseModel):
     address: str | None = None
     contact_number: str | None = None
     business_hours: dict[str, str] | None = None
+    total_tables: int = 10
     image_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

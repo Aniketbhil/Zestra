@@ -1,5 +1,6 @@
 import base64
 import io
+import uuid
 import qrcode
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -9,9 +10,11 @@ from app.core.config import settings
 from app.core.deps import require_role
 from app.db.session import get_db
 from app.models.restaurant import Restaurant
+from app.models.table import Table
 from app.models.user import User, UserRole
 from app.schemas.restaurant import (
     RestaurantCreate,
+    RestaurantDeleteRequest,
     RestaurantQRCodeResponse,
     RestaurantResponse,
     RestaurantSettingsUpdate,
@@ -33,9 +36,10 @@ async def onboard_restaurant(
     db: AsyncSession = Depends(get_db),
 ):
     """Onboard a new restaurant profile for the authenticated user with 'restaurant' role."""
-    # Check if current user already has a restaurant profile (1:1 constraint)
+    # Check if current user already has an active restaurant profile (1:1 constraint)
     existing_stmt = select(Restaurant.id).where(
-        Restaurant.owner_id == current_user.id
+        Restaurant.owner_id == current_user.id,
+        Restaurant.is_deleted == False,
     )
     existing_res = await db.execute(existing_stmt)
     if existing_res.scalar_one_or_none() is not None:
@@ -55,8 +59,21 @@ async def onboard_restaurant(
         description=payload.description,
         address=payload.address,
         image_url=payload.image_url,
+        total_tables=payload.total_tables,
     )
     db.add(restaurant)
+    await db.flush()
+
+    # Auto-create Table rows numbered 1 through total_tables
+    tables = [
+        Table(
+            restaurant_id=restaurant.id,
+            table_number=i,
+            capacity=4,
+        )
+        for i in range(1, payload.total_tables + 1)
+    ]
+    db.add_all(tables)
     await db.commit()
     await db.refresh(restaurant)
 
@@ -73,7 +90,10 @@ async def get_my_restaurant(
     db: AsyncSession = Depends(get_db),
 ):
     """Get the authenticated user's linked Restaurant profile."""
-    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    stmt = select(Restaurant).where(
+        Restaurant.owner_id == current_user.id,
+        Restaurant.is_deleted == False,
+    )
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 
@@ -96,12 +116,11 @@ async def update_my_restaurant(
     current_user: User = Depends(require_role(UserRole.RESTAURANT)),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update the authenticated user's Restaurant details.
-
-    Allows updating description, address, contact_number, business_hours, image_url.
-    Name and slug are locked and cannot be changed.
-    """
-    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    """Update the authenticated user's Restaurant details."""
+    stmt = select(Restaurant).where(
+        Restaurant.owner_id == current_user.id,
+        Restaurant.is_deleted == False,
+    )
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 
@@ -110,6 +129,25 @@ async def update_my_restaurant(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Restaurant not onboarded yet.",
         )
+
+    if payload.total_tables is not None:
+        if payload.total_tables < restaurant.total_tables:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reducing total tables is not allowed.",
+            )
+        if payload.total_tables > restaurant.total_tables:
+            current_count = restaurant.total_tables
+            new_tables = [
+                Table(
+                    restaurant_id=restaurant.id,
+                    table_number=i,
+                    capacity=4,
+                )
+                for i in range(current_count + 1, payload.total_tables + 1)
+            ]
+            db.add_all(new_tables)
+            restaurant.total_tables = payload.total_tables
 
     if payload.description is not None:
         restaurant.description = payload.description
@@ -138,11 +176,11 @@ async def update_my_restaurant_settings(
     current_user: User = Depends(require_role(UserRole.RESTAURANT)),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update settings for the authenticated user's Restaurant profile.
-
-    Supports toggling `new_order_notifications_enabled`.
-    """
-    stmt = select(Restaurant).where(Restaurant.owner_id == current_user.id)
+    """Update settings for the authenticated user's Restaurant profile."""
+    stmt = select(Restaurant).where(
+        Restaurant.owner_id == current_user.id,
+        Restaurant.is_deleted == False,
+    )
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 
@@ -163,6 +201,43 @@ async def update_my_restaurant_settings(
     return restaurant
 
 
+@router.delete(
+    "/me",
+    status_code=status.HTTP_200_OK,
+)
+async def delete_my_restaurant(
+    payload: RestaurantDeleteRequest,
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Soft delete the authenticated user's restaurant profile."""
+    if not payload.confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Deletion not confirmed. Set confirm: true to proceed.",
+        )
+
+    stmt = select(Restaurant).where(
+        Restaurant.owner_id == current_user.id,
+        Restaurant.is_deleted == False,
+    )
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not found.",
+        )
+
+    restaurant.is_deleted = True
+    restaurant.slug = f"{restaurant.slug}-deleted-{uuid.uuid4().hex[:6]}"
+    restaurant.owner_id = None
+    await db.commit()
+
+    return {"message": "Restaurant successfully deleted."}
+
+
 @router.get(
     "/{slug}/qrcode",
     response_model=RestaurantQRCodeResponse,
@@ -174,7 +249,10 @@ async def get_restaurant_qrcode(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate QR code encoding the restaurant menu URL for the authenticated restaurant owner."""
-    stmt = select(Restaurant).where(Restaurant.slug == slug)
+    stmt = select(Restaurant).where(
+        Restaurant.slug == slug,
+        Restaurant.is_deleted == False,
+    )
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 

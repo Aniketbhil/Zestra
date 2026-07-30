@@ -24,7 +24,10 @@ router = APIRouter(prefix="/menu", tags=["Menu"])
 
 async def get_user_restaurant(db: AsyncSession, user_id: UUID) -> Restaurant:
     """Fetch the restaurant belonging to the current user, or raise 400 Bad Request if not onboarded."""
-    stmt = select(Restaurant).where(Restaurant.owner_id == user_id)
+    stmt = select(Restaurant).where(
+        Restaurant.owner_id == user_id,
+        Restaurant.is_deleted == False,
+    )
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
     if not restaurant:

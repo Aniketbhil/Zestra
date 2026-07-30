@@ -1,5 +1,7 @@
 import logging
+from datetime import date as date_type
 from decimal import Decimal
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +19,9 @@ from app.models.inventory_item import InventoryItem
 from app.models.menu_item import MenuItem
 from app.models.menu_item_ingredient import MenuItemIngredient
 from app.models.order import Order, OrderItem, OrderStatus
+from app.models.reservation import Reservation, ReservationStatus
 from app.models.restaurant import Restaurant
+from app.models.table import Table
 from app.models.user import User
 
 from app.schemas.menu_item import (
@@ -27,6 +31,7 @@ from app.schemas.menu_item import (
 )
 from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
 from app.schemas.restaurant import PublicRestaurantResponse
+from app.schemas.table import PublicTableAvailabilityResponse
 from app.services.connection_manager import manager
 
 logger = logging.getLogger(__name__)
@@ -53,6 +58,7 @@ async def get_public_restaurants(
     """
     stmt = (
         select(Restaurant)
+        .where(Restaurant.is_deleted == False)
         .order_by(Restaurant.name.asc())
         .offset(offset)
         .limit(limit)
@@ -72,7 +78,7 @@ async def get_public_menu(
     db: AsyncSession = Depends(get_db),
 ):
     """Fetch public restaurant menu by restaurant slug without authentication."""
-    stmt = select(Restaurant).where(Restaurant.slug == slug)
+    stmt = select(Restaurant).where(Restaurant.slug == slug, Restaurant.is_deleted == False)
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 
@@ -136,7 +142,7 @@ async def create_public_order(
         )
 
     # 1. Validate restaurant exists
-    stmt = select(Restaurant).where(Restaurant.slug == slug)
+    stmt = select(Restaurant).where(Restaurant.slug == slug, Restaurant.is_deleted == False)
     res = await db.execute(stmt)
     restaurant = res.scalar_one_or_none()
 
@@ -282,5 +288,73 @@ async def create_public_order(
             logger.warning(f"Failed to enqueue notify_order_placed job: {e}")
 
     return created_order
+
+
+@router.get(
+    "/tables/{slug}",
+    response_model=list[PublicTableAvailabilityResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_public_tables_availability(
+    slug: str,
+    date: date_type = Query(..., description="Date in YYYY-MM-DD format"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Fetch all tables for a restaurant with their booked time slots for a given date."""
+    # 1. Find restaurant by slug
+    stmt = select(Restaurant).where(Restaurant.slug == slug, Restaurant.is_deleted == False)
+    res = await db.execute(stmt)
+    restaurant = res.scalar_one_or_none()
+
+    if not restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not found.",
+        )
+
+    # 2. Fetch all tables for the restaurant
+    tables_stmt = (
+        select(Table)
+        .where(Table.restaurant_id == restaurant.id)
+        .order_by(Table.table_number.asc())
+    )
+    tables_res = await db.execute(tables_stmt)
+    tables = tables_res.scalars().all()
+
+    if not tables:
+        return []
+
+    table_ids = [t.id for t in tables]
+
+    # 3. Fetch confirmed reservations for these tables on the specified date
+    res_stmt = select(Reservation).where(
+        Reservation.table_id.in_(table_ids),
+        Reservation.reservation_date == date,
+        Reservation.status == ReservationStatus.CONFIRMED,
+    )
+    reservations_res = await db.execute(res_stmt)
+    reservations = reservations_res.scalars().all()
+
+    # 4. Group booked slots by table_id
+    booked_slots_by_table: dict[UUID, list[str]] = {t.id: [] for t in tables}
+    for reservation in reservations:
+        formatted_time = str(reservation.reservation_time)
+        if reservation.table_id in booked_slots_by_table:
+            booked_slots_by_table[reservation.table_id].append(formatted_time)
+
+    # 5. Build response list
+    result = []
+    for t in tables:
+        slots = booked_slots_by_table.get(t.id, [])
+        result.append(
+            PublicTableAvailabilityResponse(
+                id=t.id,
+                table_number=t.table_number,
+                capacity=t.capacity,
+                booked_slots=slots,
+            )
+        )
+
+    return result
 
 
