@@ -378,6 +378,12 @@ const CustomerHome = () => {
       {/* STEP 3: Choose Action (Previously Step 2) */}
       {step === 3 && (
         <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 relative z-10">
+          <button 
+            onClick={() => setStep(1)} 
+            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors mx-auto sm:mx-0 p-2 -ml-2 rounded-lg hover:bg-(--surface)"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back to restaurants
+          </button>
           <div className="mb-10 sm:mb-12 text-center sm:text-left">
             <h2 className="text-3xl sm:text-5xl font-black text-(--text) tracking-tight">Welcome to {selectedRestaurant?.name}</h2>
             <p className="text-base sm:text-lg font-medium text-(--text-secondary) mt-3">What would you like to do today?</p>
