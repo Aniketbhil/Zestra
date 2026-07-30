@@ -53,6 +53,15 @@ async def test_login_success():
     reg_resp = client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_resp.status_code == 201
 
+    # Mark user as verified in DB
+    async with TestingSessionLocal() as session:
+        await session.execute(
+            Base.metadata.tables["users"].update().where(
+                Base.metadata.tables["users"].c.email == "user@example.com"
+            ).values(is_verified=True)
+        )
+        await session.commit()
+
     # Login
     login_payload = {
         "email": "user@example.com",
@@ -88,6 +97,32 @@ async def test_login_success():
 
 
 @pytest.mark.asyncio
+async def test_login_unverified_user_rejected():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Register user (unverified by default)
+    reg_payload = {
+        "email": "unverified@example.com",
+        "password": "ValidP@ssword123",
+        "role": "customer",
+    }
+    reg_resp = client.post("/api/v1/auth/register", json=reg_payload)
+    assert reg_resp.status_code == 201
+
+    login_payload = {
+        "email": "unverified@example.com",
+        "password": "ValidP@ssword123",
+    }
+    response = client.post("/api/v1/auth/login", json=login_payload)
+    assert response.status_code == 403
+    assert "please verify your email before logging in" in response.json()["detail"]
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
 async def test_login_nonexistent_user():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -116,6 +151,15 @@ async def test_login_wrong_password():
     }
     client.post("/api/v1/auth/register", json=reg_payload)
 
+    # Mark user as verified in DB
+    async with TestingSessionLocal() as session:
+        await session.execute(
+            Base.metadata.tables["users"].update().where(
+                Base.metadata.tables["users"].c.email == "user@example.com"
+            ).values(is_verified=True)
+        )
+        await session.commit()
+
     login_payload = {
         "email": "user@example.com",
         "password": "WrongPassword123!",
@@ -141,6 +185,7 @@ async def test_login_google_provider_rejected():
             google_id="123456789",
             role=UserRole.CUSTOMER,
             is_active=True,
+            is_verified=True,
         )
         session.add(google_user)
         await session.commit()
@@ -170,6 +215,7 @@ async def test_login_inactive_user():
             auth_provider=AuthProvider.LOCAL,
             role=UserRole.CUSTOMER,
             is_active=False,
+            is_verified=True,
         )
         session.add(inactive_user)
         await session.commit()

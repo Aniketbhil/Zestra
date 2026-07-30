@@ -118,6 +118,7 @@ async def test_google_callback_creates_new_user(mock_google_config):
         assert user_row.google_id == "google-12345"
         assert user_row.auth_provider == AuthProvider.GOOGLE
         assert user_row.role == UserRole.RESTAURANT
+        assert user_row.is_verified is True
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

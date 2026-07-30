@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 import hashlib
+import logging
+import random
 from uuid import UUID
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from arq import create_pool
+from arq.connections import RedisSettings
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 import httpx
 import jwt
@@ -18,12 +22,17 @@ from app.models.user import AuthProvider, User, UserRole
 from app.schemas.auth import (
     ChangePasswordRequest,
     RefreshTokenRequest,
+    ResendOTPRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
+    UserRegisterResponse,
+    VerifyOTPRequest,
 )
 from app.schemas.user import UserResponse
 from app.services.security import generate_token_pair, hash_password, verify_password
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -32,11 +41,12 @@ _blacklisted_refresh_tokens: set[str] = set()
 
 @router.post(
     "/register",
-    response_model=TokenResponse,
+    response_model=UserRegisterResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def register(
     payload: UserRegisterRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Register a new user (customer or restaurant only)."""
@@ -50,21 +60,200 @@ async def register(
             detail="Email is already registered.",
         )
 
+    # Check for duplicate phone number if provided
+    if payload.phone_number:
+        query_phone = select(User).where(User.phone_number == payload.phone_number)
+        result_phone = await db.execute(query_phone)
+        if result_phone.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number is already registered.",
+            )
+
     # Hash password using Argon2
     hashed_pwd = hash_password(payload.password)
 
     user = User(
         email=payload.email,
+        phone_number=payload.phone_number,
         hashed_password=hashed_pwd,
         auth_provider=AuthProvider.LOCAL,
         role=UserRole(payload.role.value),
         is_active=True,
+        is_verified=False,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
+    # 1. Generate 6-digit numeric OTP
+    otp = f"{random.randint(100000, 999999)}"
+
+    # 2. Store in Redis with key otp:{email} and 10-minute TTL (600s)
+    try:
+        await redis_client.set(f"otp:{user.email}", otp, ex=600)
+    except Exception as e:
+        logger.warning(f"Failed to store OTP in Redis for {user.email}: {e}")
+
+    # 3. Enqueue single arq background job
+    pool = (
+        getattr(request.app.state, "redis_pool", None)
+        or getattr(request.app.state, "arq_pool", None)
+        if request and hasattr(request.app, "state")
+        else None
+    )
+    if pool is not None:
+        try:
+            await pool.enqueue_job("send_otp_job", user.email, otp, user.phone_number)
+        except Exception as e:
+            logger.warning(f"Failed to enqueue send_otp_job via pool: {e}")
+    else:
+        try:
+            pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+            await pool.enqueue_job("send_otp_job", user.email, otp, user.phone_number)
+            await pool.close()
+        except Exception as e:
+            logger.warning(f"Failed to enqueue send_otp_job via fallback pool: {e}")
+
+    return UserRegisterResponse(
+        message="Registration successful, please verify the OTP sent to your email",
+        email=user.email,
+    )
+
+
+@router.post(
+    "/verify-otp",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def verify_otp(
+    payload: VerifyOTPRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Verify numeric OTP for user registration/verification.
+
+    - Missing Redis key -> 400 "OTP expired, please request a new one"
+    - Mismatched OTP -> 400 "invalid OTP"
+    - Match -> set is_verified=True, delete Redis key, return access + refresh tokens immediately.
+    """
+    # 1. Fetch OTP from Redis
+    stored_otp = None
+    try:
+        stored_otp = await redis_client.get(f"otp:{payload.email}")
+    except Exception as e:
+        logger.warning(f"Error reading OTP from Redis for {payload.email}: {e}")
+
+    if not stored_otp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP expired, please request a new one.",
+        )
+
+    if stored_otp.strip() != payload.otp.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="invalid OTP",
+        )
+
+    # 2. Fetch User by email
+    query = select(User).where(User.email == payload.email)
+    res = await db.execute(query)
+    user = res.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    # 3. Mark user as verified & delete Redis OTP key
+    user.is_verified = True
+    await db.commit()
+    await db.refresh(user)
+
+    try:
+        await redis_client.delete(f"otp:{payload.email}")
+    except Exception as e:
+        logger.warning(f"Error deleting OTP from Redis for {payload.email}: {e}")
+
+    # 4. Issue access + refresh tokens immediately
     return generate_token_pair(str(user.id), user.email, user.role.value)
+
+
+@router.post(
+    "/resend-otp",
+    status_code=status.HTTP_200_OK,
+)
+async def resend_otp(
+    payload: ResendOTPRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend numeric OTP code to email (and optional SMS).
+
+    - Checks otp:cooldown:{email} in Redis. If present -> 429 "please wait before requesting another code"
+    - Generates new 6-digit numeric OTP
+    - Overwrites otp:{email} in Redis (600s TTL)
+    - Sets otp:cooldown:{email} in Redis (60s TTL)
+    - Enqueues send_otp_job arq task
+    """
+    # 1. Check cooldown in Redis
+    cooldown = None
+    try:
+        cooldown = await redis_client.get(f"otp:cooldown:{payload.email}")
+    except Exception as e:
+        logger.warning(f"Error checking OTP cooldown for {payload.email}: {e}")
+
+    if cooldown:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="please wait before requesting another code",
+        )
+
+    # 2. Fetch User by email
+    query = select(User).where(User.email == payload.email)
+    res = await db.execute(query)
+    user = res.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    # 3. Generate new 6-digit numeric OTP
+    otp = f"{random.randint(100000, 999999)}"
+
+    # 4. Overwrite otp:{email} in Redis (10-min TTL) and set cooldown (60-sec TTL)
+    try:
+        await redis_client.set(f"otp:{user.email}", otp, ex=600)
+        await redis_client.set(f"otp:cooldown:{user.email}", "1", ex=60)
+    except Exception as e:
+        logger.warning(f"Failed to store OTP or cooldown in Redis for {user.email}: {e}")
+
+    # 5. Enqueue single arq background job
+    pool = (
+        getattr(request.app.state, "redis_pool", None)
+        or getattr(request.app.state, "arq_pool", None)
+        if request and hasattr(request.app, "state")
+        else None
+    )
+    if pool is not None:
+        try:
+            await pool.enqueue_job("send_otp_job", user.email, otp, user.phone_number)
+        except Exception as e:
+            logger.warning(f"Failed to enqueue send_otp_job via pool: {e}")
+    else:
+        try:
+            pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+            await pool.enqueue_job("send_otp_job", user.email, otp, user.phone_number)
+            await pool.close()
+        except Exception as e:
+            logger.warning(f"Failed to enqueue send_otp_job via fallback pool: {e}")
+
+    return {"message": "Verification code resent successfully."}
+
+
 
 
 @router.post(
@@ -97,6 +286,12 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
+        )
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="please verify your email before logging in",
         )
 
     if not user.is_active:
@@ -331,6 +526,7 @@ async def google_callback(
         if not user.google_id:
             user.google_id = google_id
             user.auth_provider = AuthProvider.GOOGLE
+            user.is_verified = True
             await db.commit()
             await db.refresh(user)
     else:
@@ -343,6 +539,7 @@ async def google_callback(
             auth_provider=AuthProvider.GOOGLE,
             google_id=google_id,
             role=assigned_role,
+            is_verified=True,
         )
         db.add(user)
         await db.commit()

@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     FRONTEND_BASE_URL: str = "http://localhost:5173"
 
     GEMINI_API_KEY: str = ""
+    TWOFACTOR_API_KEY: str = ""
+
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+
+
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -9,12 +9,34 @@ from app.db.session import AsyncSessionLocal
 from app.models.inventory_item import InventoryItem
 from app.models.restaurant import Restaurant
 from app.services.connection_manager import manager
+from app.services.email import send_otp_email
+from app.services.sms import send_otp_sms
 
 logger = logging.getLogger(__name__)
 
 
 async def notify_order_placed(ctx: dict[str, Any], order_id: Any) -> None:
     logger.info(f"Order {order_id} confirmed")
+
+
+async def send_otp_job(
+    ctx: dict[str, Any],
+    email: str,
+    otp: str,
+    phone_number: str | None = None,
+) -> None:
+    """Background task to send OTP email and optional OTP SMS."""
+    try:
+        await send_otp_email(email, otp)
+    except Exception as e:
+        logger.error(f"Error in send_otp_email task for {email}: {e}")
+
+    if phone_number:
+        try:
+            await send_otp_sms(phone_number, otp)
+        except Exception as e:
+            logger.error(f"Error in send_otp_sms task for {phone_number}: {e}")
+
 
 
 async def check_low_stock(ctx: dict[str, Any]) -> None:

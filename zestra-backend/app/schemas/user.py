@@ -20,9 +20,11 @@ class UserResponse(BaseModel):
     id: UUID
     email: EmailStr
     full_name: str | None = None
+    phone_number: str | None = None
     auth_provider: AuthProvider
     role: UserRole
     is_active: bool
+    is_verified: bool = False
     notifications_enabled: bool = True
     created_at: datetime
 
@@ -53,9 +55,11 @@ class UserProfileResponse(BaseModel):
     id: UUID
     email: EmailStr
     full_name: str | None = None
+    phone_number: str | None = None
     role: UserRole
     auth_provider: AuthProvider
     is_active: bool
+    is_verified: bool = False
     notifications_enabled: bool = True
     created_at: datetime
     restaurant: RestaurantResponse | None = None

@@ -38,6 +38,11 @@ class User(Base):
         index=True,
         nullable=False,
     )
+    phone_number: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True,
+    )
     hashed_password: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -64,6 +69,11 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+        nullable=False,
+    )
+    is_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
     notifications_enabled: Mapped[bool] = mapped_column(

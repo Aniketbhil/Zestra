@@ -13,6 +13,19 @@ def test_user_model_instantiation():
     assert user.role == UserRole.CUSTOMER
     assert user.hashed_password is None
     assert user.google_id is None
+    assert user.phone_number is None
+    assert user.is_verified is False
+
+    user_with_phone = User(
+        email="phone@example.com",
+        phone_number="+1234567890",
+        auth_provider=AuthProvider.LOCAL,
+        role=UserRole.CUSTOMER,
+        is_verified=True,
+    )
+    assert user_with_phone.phone_number == "+1234567890"
+    assert user_with_phone.is_verified is True
+
 
 
 def test_user_enums():

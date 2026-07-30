@@ -49,6 +49,7 @@ async def test_change_password_success():
             auth_provider=AuthProvider.LOCAL,
             role=UserRole.CUSTOMER,
             is_active=True,
+            is_verified=True,
         )
         session.add(user)
         await session.commit()
