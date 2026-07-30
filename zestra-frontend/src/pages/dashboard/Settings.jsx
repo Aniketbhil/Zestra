@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Shield, User, Lock, Store, MapPin, Phone, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Mail, Shield, User, Lock, Store, MapPin, Phone, Loader2, Image as ImageIcon, Grid3X3 } from 'lucide-react';
 import useAuthStore from '../../store/auth/useAuthStore';
 import useRestaurantStore from '../../store/dashboard/useRestaurantStore';
 import api from '../../services/api';
@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const Settings = () => {
   const { user, fetchUser } = useAuthStore();
-  const { restaurant, fetchMyRestaurant } = useRestaurantStore();
+  const { restaurant, fetchMyRestaurant, updateMyRestaurant } = useRestaurantStore();
 
   // SECURITY FIX: Prevent stale data from previous logins
   const currentRestaurant = restaurant?.owner_id === user?.id ? restaurant : null;
@@ -22,7 +22,7 @@ const Settings = () => {
 
   // --- 3. Restaurant Profile State ---
   const [restDetails, setRestDetails] = useState({
-    description: '', address: '', contact_number: '', image_url: ''
+    description: '', address: '', contact_number: '', image_url: '', total_tables: 10
   });
   const [isRestSaving, setIsRestSaving] = useState(false);
 
@@ -45,11 +45,12 @@ const Settings = () => {
         description: currentRestaurant.description || '',
         address: currentRestaurant.address || '',
         contact_number: currentRestaurant.contact_number || '',
-        image_url: currentRestaurant.image_url || ''
+        image_url: currentRestaurant.image_url || '',
+        total_tables: currentRestaurant.total_tables || 10
       });
     } else {
       // Clear out the form if there is no valid restaurant for this user
-      setRestDetails({ description: '', address: '', contact_number: '', image_url: '' });
+      setRestDetails({ description: '', address: '', contact_number: '', image_url: '', total_tables: 10 });
     }
   }, [user, currentRestaurant]);
 
@@ -92,20 +93,19 @@ const Settings = () => {
   const handleUpdateRestaurant = async (e) => {
     e.preventDefault();
     setIsRestSaving(true);
-    try {
-      await api.patch('/restaurants/me', {
-        description: restDetails.description,
-        address: restDetails.address,
-        contact_number: restDetails.contact_number,
-        image_url: restDetails.image_url
-      });
+    
+    const success = await updateMyRestaurant({
+      description: restDetails.description,
+      address: restDetails.address,
+      contact_number: restDetails.contact_number,
+      image_url: restDetails.image_url,
+      total_tables: parseInt(restDetails.total_tables, 10)
+    });
+
+    if (success) {
       await fetchMyRestaurant();
-      toast.success("Restaurant details updated!");
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to update restaurant");
-    } finally {
-      setIsRestSaving(false);
     }
+    setIsRestSaving(false);
   };
 
   return (
@@ -299,7 +299,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Cover Image URL</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -314,6 +314,25 @@ const Settings = () => {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-2">Total Table Capacity</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Grid3X3 className="h-5 w-5 text-(--text-muted)/70" />
+                  </div>
+                  <input 
+                    type="number" 
+                    min="1"
+                    max="100"
+                    value={restDetails.total_tables}
+                    onChange={(e) => setRestDetails({...restDetails, total_tables: e.target.value})}
+                    className="w-full pl-12 pr-5 py-4 bg-(--background) border-2 border-(--border)/60 rounded-2xl focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-(--text) font-medium text-base shadow-sm"
+                  />
+                </div>
+                <p className="text-[11px] font-bold text-(--text-muted) mt-2 uppercase tracking-wide">How many tables are in your restaurant?</p>
+              </div>
+
             </div>
 
             <div className="flex justify-end pt-6 border-t border-(--border)/60">
