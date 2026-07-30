@@ -11,7 +11,8 @@ const CustomerHome = () => {
   // Stores
   const { fetchPublicTables, createReservation, isLoading: isReserving } = useReservationStore();
 
-  // Step Management: 1 = Select Restaurant, 2 = Reserve Table, 3 = Choose Action, 4 = Track Order, 5 = View QR Code
+  // Step Management: 
+  // 1 = Select Restaurant, 2 = Choose Action, 3 = Track Order, 4 = View QR Code, 5 = Reserve Table
   const [step, setStep] = useState(1);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [orderId, setOrderId] = useState('');
@@ -42,9 +43,9 @@ const CustomerHome = () => {
     fetchRestaurants();
   }, []);
 
-  // Fetch tables whenever the restaurant or date changes
+  // Fetch tables whenever the restaurant or date changes AND user is on Step 5 (Reservation)
   useEffect(() => {
-    if (step === 2 && selectedRestaurant) {
+    if (step === 5 && selectedRestaurant) {
       const loadTables = async () => {
         setIsFetchingTables(true);
         const tables = await fetchPublicTables(selectedRestaurant.slug, selectedDate);
@@ -57,12 +58,8 @@ const CustomerHome = () => {
     }
   }, [step, selectedRestaurant, selectedDate, fetchPublicTables]);
 
-  const handleContinueToReservation = () => {
+  const handleContinueToAction = () => {
     if (selectedRestaurant) setStep(2);
-  };
-
-  const handleSkipReservation = () => {
-    setStep(3); // Skip directly to actions
   };
 
   // Generate 48 time slots (12:00 AM to 11:30 PM in 30-min increments)
@@ -97,7 +94,8 @@ const CustomerHome = () => {
 
     const result = await createReservation(payload);
     if (result) {
-      setStep(3); // Move to actions upon success
+      toast.success("Table booked successfully!");
+      setStep(2); // Move back to actions upon success
     }
   };
 
@@ -106,10 +104,6 @@ const CustomerHome = () => {
     if (orderId.trim() && selectedRestaurant) {
       navigate(`/tracking/${selectedRestaurant.slug}/${orderId.trim()}`);
     }
-  };
-
-  const handleViewQR = () => {
-    setStep(5);
   };
 
   // Helper to format time (14:30:00 -> 2:30 PM)
@@ -190,7 +184,7 @@ const CustomerHome = () => {
           )}
 
           <button 
-            onClick={handleContinueToReservation}
+            onClick={handleContinueToAction}
             disabled={!selectedRestaurant}
             className="w-full sm:w-auto min-w-70 py-4 sm:py-5 bg-(--primary) hover:bg-(--primary-hover) disabled:bg-(--text-muted) disabled:shadow-none disabled:translate-y-0 text-white font-black rounded-[20px] transition-all duration-300 flex justify-center items-center gap-3 mx-auto shadow-[0_10px_30px_rgba(16,185,129,0.3)] active:scale-95 hover:-translate-y-1 text-base sm:text-lg border border-(--primary-hover)"
           >
@@ -199,23 +193,160 @@ const CustomerHome = () => {
         </div>
       )}
 
-      {/* STEP 2: Interactive Table Reservation (Movie Ticket Style) */}
+      {/* STEP 2: Choose Action */}
       {step === 2 && (
-        <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 relative z-10 text-left">
-          <div className="flex items-center justify-between mb-8">
-            <button 
-              onClick={() => setStep(1)} 
-              className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
-            >
-              <ChevronLeft className="w-5 h-5" /> Back
-            </button>
-            <button 
-              onClick={handleSkipReservation}
-              className="text-(--primary) hover:text-(--primary-hover) font-bold text-sm underline decoration-transparent hover:decoration-current transition-colors"
-            >
-              Skip Reservation
-            </button>
+        <div className="w-full max-w-5xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 relative z-10">
+          
+          <button 
+            onClick={() => setStep(1)} 
+            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors mx-auto sm:mx-0 p-2 -ml-2 rounded-lg hover:bg-(--surface)"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back to restaurants
+          </button>
+
+          <div className="mb-10 sm:mb-12 text-center sm:text-left">
+            <h2 className="text-3xl sm:text-5xl font-black text-(--text) tracking-tight">Welcome to {selectedRestaurant?.name}</h2>
+            <p className="text-base sm:text-lg font-medium text-(--text-secondary) mt-3">What would you like to do today?</p>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 w-full">
+            
+            {/* View Menu Bento */}
+            <button 
+              onClick={() => navigate(`/menu/${selectedRestaurant?.slug}`)}
+              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.1)] hover:-translate-y-2 hover:border-emerald-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
+            >
+              <div className="w-20 h-20 bg-linear-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-emerald-100">
+                <UtensilsCrossed className="w-10 h-10" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">View Menu</h3>
+              <p className="text-sm font-medium text-(--text-secondary) mt-2">Order directly from your phone</p>
+            </button>
+            
+            {/* Track Order Bento */}
+            <button 
+              onClick={() => setStep(3)}
+              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.1)] hover:-translate-y-2 hover:border-blue-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
+            >
+              <div className="w-20 h-20 bg-linear-to-br from-blue-100 to-blue-50 text-blue-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-blue-100">
+                <Search className="w-10 h-10" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Track Order</h3>
+              <p className="text-sm font-medium text-(--text-secondary) mt-2">Check live kitchen status</p>
+            </button>
+
+            {/* Book Table Bento (New 4th Option) */}
+            <button 
+              onClick={() => setStep(5)}
+              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.1)] hover:-translate-y-2 hover:border-pink-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
+            >
+              <div className="w-20 h-20 bg-linear-to-br from-pink-100 to-pink-50 text-pink-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-pink-100">
+                <CalendarDays className="w-10 h-10" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Book Table</h3>
+              <p className="text-sm font-medium text-(--text-secondary) mt-2">Reserve your dining spot</p>
+            </button>
+
+            {/* Restaurant QR Bento */}
+            <button 
+              onClick={() => setStep(4)}
+              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(168,85,247,0.1)] hover:-translate-y-2 hover:border-purple-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
+            >
+              <div className="w-20 h-20 bg-linear-to-br from-purple-100 to-purple-50 text-purple-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-purple-100">
+                <QrCode className="w-10 h-10" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Share Menu</h3>
+              <p className="text-sm font-medium text-(--text-secondary) mt-2">Generate QR for a friend</p>
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Track Order */}
+      {step === 3 && (
+        <div className="w-full max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500 relative z-10">
+          <button 
+            onClick={() => setStep(2)} 
+            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back
+          </button>
+
+          <form onSubmit={handleTrackSubmit} className="bg-linear-to-br from-(--surface) to-(--surface-secondary) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] text-left">
+            <div className="flex items-center gap-4 sm:gap-5 mb-8 border-b border-(--border)/50 pb-8">
+              <div className="w-14 h-14 bg-linear-to-br from-blue-100 to-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
+                <Search className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-(--text) leading-tight tracking-tight">Find Your Order</h3>
+                <p className="text-sm font-medium text-(--text-muted) mt-1 line-clamp-1">at {selectedRestaurant?.name}</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-(--text-secondary) mb-3">Enter Order ID</label>
+                <input 
+                  type="text" 
+                  autoFocus
+                  required
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                  placeholder="e.g. ord_123abc" 
+                  className="w-full px-5 py-4 sm:py-5 bg-(--background) border-2 border-(--border) rounded-[20px] focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-(--text) font-mono font-bold transition-all text-base sm:text-lg placeholder:text-(--text-muted)/50 placeholder:font-sans placeholder:font-medium shadow-inner"
+                />
+              </div>
+              <button type="submit" className="w-full py-4 sm:py-5 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg rounded-[20px] shadow-[0_10px_30px_rgba(59,130,246,0.3)] transition-all active:scale-95 hover:-translate-y-1 flex items-center justify-center gap-2 border border-blue-500/50">
+                Track Live Status <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* STEP 4: View Restaurant QR Code */}
+      {step === 4 && (
+        <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500 relative z-10">
+          <button 
+            onClick={() => setStep(2)} 
+            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back
+          </button>
+
+          <div className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] text-center relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
+
+            <h3 className="text-3xl font-black text-(--text) mb-2 tracking-tight">{selectedRestaurant?.name}</h3>
+            <p className="text-sm font-medium text-(--text-secondary) mb-8">Scan this code to load the live menu.</p>
+
+            <div className="p-5 bg-white rounded-3xl shadow-sm border-2 border-dashed border-gray-200 inline-block">
+              {/* Using a free, instant QR Code API to bypass the backend 403 error */}
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/menu/' + selectedRestaurant?.slug)}`} 
+                alt={`${selectedRestaurant?.name} QR Code`} 
+                className="w-56 h-56 object-contain"
+              />
+            </div>
+            
+            <p className="text-xs font-bold text-(--text-muted) uppercase tracking-widest mt-8">
+              Powered by Zestra OS
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 5: Interactive Table Reservation (Movie Ticket Style) */}
+      {step === 5 && (
+        <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 relative z-10 text-left">
+          
+          <button 
+            onClick={() => setStep(2)} 
+            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back to actions
+          </button>
 
           <div className="mb-8">
             <h2 className="text-3xl sm:text-4xl font-black text-(--text) tracking-tight">Reserve a Table</h2>
@@ -226,12 +357,11 @@ const CustomerHome = () => {
             
             {/* Date Picker */}
             <div className="mb-8">
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3">Select Date</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3 items-center justify-between">Select Date</label>
               <div className="relative max-w-xs">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <CalendarDays className="h-5 w-5 text-(--text-muted)/70" />
                 </div>
-                {/* Min attribute restricts to current date onwards */}
                 <input 
                   type="date" 
                   min={new Date().toISOString().split('T')[0]}
@@ -244,7 +374,7 @@ const CustomerHome = () => {
 
             {/* Movie Ticket Grid Area */}
             <div>
-              <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-4">Select Table</label>
+              <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-4 items-center justify-between">Select Table</label>
               
               {isFetchingTables ? (
                 <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-(--border)/60 rounded-2xl">
@@ -259,7 +389,6 @@ const CustomerHome = () => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {availableTables.map((table) => {
-                    // Check if table is fully booked for all 48 slots (unlikely, but possible)
                     const isFullyBooked = table.booked_slots?.length >= 48;
                     const isSelected = selectedTable?.id === table.id;
 
@@ -302,13 +431,13 @@ const CustomerHome = () => {
               )}
             </div>
 
-            {/* Time Slot & Party Size (Appears ONLY when a table is clicked) */}
+            {/* Time Slot & Party Size */}
             {selectedTable && (
               <div className="mt-10 pt-8 border-t border-(--border)/60 animate-in fade-in slide-in-from-bottom-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                   
                   <div>
-                    <label className="text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3 flex items-center justify-between">
+                    <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3 items-center justify-between">
                       Select Time
                       <span className="text-[9px] bg-(--background) border border-(--border) px-1.5 py-0.5 rounded text-(--text-muted)">30-Min Slots</span>
                     </label>
@@ -338,7 +467,7 @@ const CustomerHome = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3">Party Size</label>
+                    <label className="flex text-[11px] font-black text-(--text-secondary) uppercase tracking-widest mb-3 items-center justify-between">Party Size</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Users className="h-5 w-5 text-(--text-muted)/70" />
@@ -371,134 +500,6 @@ const CustomerHome = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: Choose Action (Previously Step 2) */}
-      {step === 3 && (
-        <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 relative z-10">
-          <button 
-            onClick={() => setStep(1)} 
-            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors mx-auto sm:mx-0 p-2 -ml-2 rounded-lg hover:bg-(--surface)"
-          >
-            <ChevronLeft className="w-5 h-5" /> Back to restaurants
-          </button>
-          <div className="mb-10 sm:mb-12 text-center sm:text-left">
-            <h2 className="text-3xl sm:text-5xl font-black text-(--text) tracking-tight">Welcome to {selectedRestaurant?.name}</h2>
-            <p className="text-base sm:text-lg font-medium text-(--text-secondary) mt-3">What would you like to do today?</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 w-full">
-            {/* View Menu Bento */}
-            <button 
-              onClick={() => navigate(`/menu/${selectedRestaurant?.slug}`)}
-              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.1)] hover:-translate-y-2 hover:border-emerald-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
-            >
-              <div className="w-20 h-20 bg-linear-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-emerald-100">
-                <UtensilsCrossed className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">View Menu</h3>
-              <p className="text-sm font-medium text-(--text-secondary) mt-2">Order directly from your phone</p>
-            </button>
-            
-            {/* Track Order Bento */}
-            <button 
-              onClick={() => setStep(4)}
-              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.1)] hover:-translate-y-2 hover:border-blue-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
-            >
-              <div className="w-20 h-20 bg-linear-to-br from-blue-100 to-blue-50 text-blue-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-blue-100">
-                <Search className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Track Order</h3>
-              <p className="text-sm font-medium text-(--text-secondary) mt-2">Check live kitchen status</p>
-            </button>
-
-            {/* Restaurant QR Bento */}
-            <button 
-              onClick={handleViewQR}
-              className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(168,85,247,0.1)] hover:-translate-y-2 hover:border-purple-500/30 transition-all duration-300 flex flex-col items-center text-center group active:scale-95"
-            >
-              <div className="w-20 h-20 bg-linear-to-br from-purple-100 to-purple-50 text-purple-600 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-purple-100">
-                <QrCode className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-(--text) tracking-tight">Share Menu</h3>
-              <p className="text-sm font-medium text-(--text-secondary) mt-2">Generate QR for a friend</p>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 4: Track Order (Previously Step 3) */}
-      {step === 4 && (
-        <div className="w-full max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500 relative z-10">
-          <button 
-            onClick={() => setStep(3)} 
-            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
-          >
-            <ChevronLeft className="w-5 h-5" /> Back
-          </button>
-
-          <form onSubmit={handleTrackSubmit} className="bg-linear-to-br from-(--surface) to-(--surface-secondary) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] text-left">
-            <div className="flex items-center gap-4 sm:gap-5 mb-8 border-b border-(--border)/50 pb-8">
-              <div className="w-14 h-14 bg-linear-to-br from-blue-100 to-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
-                <Search className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-(--text) leading-tight tracking-tight">Find Your Order</h3>
-                <p className="text-sm font-medium text-(--text-muted) mt-1 line-clamp-1">at {selectedRestaurant?.name}</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-(--text-secondary) mb-3">Enter Order ID</label>
-                <input 
-                  type="text" 
-                  autoFocus
-                  required
-                  value={orderId}
-                  onChange={(e) => setOrderId(e.target.value)}
-                  placeholder="e.g. ord_123abc" 
-                  className="w-full px-5 py-4 sm:py-5 bg-(--background) border-2 border-(--border) rounded-[20px] focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-(--text) font-mono font-bold transition-all text-base sm:text-lg placeholder:text-(--text-muted)/50 placeholder:font-sans placeholder:font-medium shadow-inner"
-                />
-              </div>
-              <button type="submit" className="w-full py-4 sm:py-5 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg rounded-[20px] shadow-[0_10px_30px_rgba(59,130,246,0.3)] transition-all active:scale-95 hover:-translate-y-1 flex items-center justify-center gap-2 border border-blue-500/50">
-                Track Live Status <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* STEP 5: View Restaurant QR Code (Previously Step 4) */}
-      {step === 5 && (
-        <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500 relative z-10">
-          <button 
-            onClick={() => setStep(3)} 
-            className="flex items-center gap-2 text-(--text-secondary) hover:text-(--text) font-bold text-sm sm:text-base mb-8 transition-colors p-2 -ml-2 rounded-lg hover:bg-(--surface)"
-          >
-            <ChevronLeft className="w-5 h-5" /> Back
-          </button>
-
-          <div className="bg-(--surface) p-8 sm:p-10 rounded-4xl border border-(--border)/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)] text-center relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
-
-            <h3 className="text-3xl font-black text-(--text) mb-2 tracking-tight">{selectedRestaurant?.name}</h3>
-            <p className="text-sm font-medium text-(--text-secondary) mb-8">Scan this code to load the live menu.</p>
-
-            <div className="p-5 bg-white rounded-3xl shadow-sm border-2 border-dashed border-gray-200 inline-block">
-              {/* Using a free, instant QR Code API to bypass the backend 403 error */}
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/menu/' + selectedRestaurant?.slug)}`} 
-                alt={`${selectedRestaurant?.name} QR Code`} 
-                className="w-56 h-56 object-contain"
-              />
-            </div>
-            
-            <p className="text-xs font-bold text-(--text-muted) uppercase tracking-widest mt-8">
-              Powered by Zestra OS
-            </p>
           </div>
         </div>
       )}
