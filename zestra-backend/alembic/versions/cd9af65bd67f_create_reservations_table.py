@@ -1,8 +1,8 @@
 """create_reservations_table
 
-Revision ID: fd04b9b79fc1
+Revision ID: cd9af65bd67f
 Revises: e0f12808323e
-Create Date: 2026-07-30 13:48:19.183789
+Create Date: 2026-07-30 14:54:46.345780
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fd04b9b79fc1'
+revision: str = 'cd9af65bd67f'
 down_revision: Union[str, Sequence[str], None] = 'e0f12808323e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,7 +28,7 @@ def upgrade() -> None:
     sa.Column('customer_id', sa.UUID(), nullable=False),
     sa.Column('reservation_date', sa.Date(), nullable=False),
     sa.Column('reservation_time', sa.Time(), nullable=False),
-    sa.Column('status', sa.Enum('CONFIRMED', 'CANCELLED', 'COMPLETED', name='reservation_status_enum'), nullable=False),
+    sa.Column('status', sa.Enum('confirmed', 'cancelled', 'completed', name='reservation_status_enum'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['customer_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['restaurant_id'], ['restaurants.id'], ),
