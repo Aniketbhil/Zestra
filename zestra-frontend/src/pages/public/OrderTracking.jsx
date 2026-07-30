@@ -239,16 +239,24 @@ const OrderTracking = () => {
         </div>
 
         <div className="space-y-3 mb-6">
-          <div className="flex justify-between font-bold border-b border-gray-300 pb-2">
-            <span>Item</span>
-            <span>Qty</span>
+          <div className="grid grid-cols-12 gap-2 font-bold border-b border-gray-300 pb-2">
+            <span className="col-span-7">Item</span>
+            <span className="col-span-2 text-right">Qty</span>
+            <span className="col-span-3 text-right">Price</span>
           </div>
-          {order.items?.map((item, i) => (
-            <div key={i} className="flex justify-between text-sm">
-              <span>Menu Item ({item.menu_item_id.slice(0, 6)})</span>
-              <span>x{item.quantity}</span>
-            </div>
-          ))}
+          {order.items?.map((item, i) => {
+            const lineTotal = parseFloat(item.price_at_order || 0) * item.quantity;
+            return (
+              <div key={i} className="grid grid-cols-12 gap-2 text-sm items-start">
+                <span className="col-span-7 pr-2 wrap-break-word">
+                  {/* Dynamically render item.name from the backend schema[cite: 1] */}
+                  {item.name || `Menu Item (${item.menu_item_id.slice(0, 6)})`}
+                </span>
+                <span className="col-span-2 text-right font-medium">x{item.quantity}</span>
+                <span className="col-span-3 text-right font-medium">${lineTotal.toFixed(2)}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="border-t-2 border-dashed border-gray-300 pt-4 text-lg">
