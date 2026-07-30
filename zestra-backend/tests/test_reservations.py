@@ -92,6 +92,7 @@ async def test_create_reservation_success_and_conflict():
         "table_id": table_id,
         "reservation_date": "2026-08-15",
         "reservation_time": "19:30:00",
+        "party_size": 2,
     }
     response1 = client.post("/api/v1/reservations", json=payload, headers=headers1)
     assert response1.status_code == 201
@@ -99,11 +100,51 @@ async def test_create_reservation_success_and_conflict():
     assert data1["status"] == "confirmed"
     assert data1["customer_id"] == str(cust1.id)
     assert data1["table_id"] == table_id
+    assert data1["party_size"] == 2
 
     # 3. Cust2 attempts to book exact same table/date/time -> HTTP 409 Conflict
     response2 = client.post("/api/v1/reservations", json=payload, headers=headers2)
     assert response2.status_code == 409
     assert response2.json()["detail"] == "This table is already booked for the selected time"
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_create_reservation_capacity_exceeded_rejected():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    owner, _ = await create_test_user("owner_cap@restaurant.com", UserRole.RESTAURANT)
+    cust, headers = await create_test_user("cust_cap@example.com", UserRole.CUSTOMER)
+
+    async with TestingSessionLocal() as session:
+        restaurant = Restaurant(
+            owner_id=owner.id,
+            name="Cap Diner",
+            slug="cap-diner",
+            total_tables=1,
+        )
+        session.add(restaurant)
+        await session.commit()
+
+        table = Table(restaurant_id=restaurant.id, table_number=1, capacity=4)
+        session.add(table)
+        await session.commit()
+        table_id = str(table.id)
+
+    # Attempt to book for 6 guests on a 4-guest capacity table
+    payload = {
+        "slug": "cap-diner",
+        "table_id": table_id,
+        "reservation_date": "2026-08-15",
+        "reservation_time": "19:30:00",
+        "party_size": 6,
+    }
+    response = client.post("/api/v1/reservations", json=payload, headers=headers)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "This table can only seat 4 guests, but 6 were requested"
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -121,6 +162,7 @@ async def test_create_reservation_forbidden_for_restaurant_role():
         "table_id": "00000000-0000-0000-0000-000000000000",
         "reservation_date": "2026-08-15",
         "reservation_time": "19:30:00",
+        "party_size": 2,
     }
     response = client.post("/api/v1/reservations", json=payload, headers=headers_owner)
     assert response.status_code == 403
@@ -142,6 +184,7 @@ async def test_create_reservation_invalid_slug():
         "table_id": "00000000-0000-0000-0000-000000000000",
         "reservation_date": "2026-08-15",
         "reservation_time": "19:30:00",
+        "party_size": 2,
     }
     response = client.post("/api/v1/reservations", json=payload, headers=headers)
     assert response.status_code == 404
@@ -179,6 +222,7 @@ async def test_get_my_reservations_success():
         "table_id": table_id,
         "reservation_date": "2026-08-20",
         "reservation_time": "20:00:00",
+        "party_size": 2,
     }
     client.post("/api/v1/reservations", json=payload, headers=headers)
 
@@ -188,6 +232,7 @@ async def test_get_my_reservations_success():
     assert len(data) == 1
     assert data[0]["table_id"] == table_id
     assert data[0]["reservation_date"] == "2026-08-20"
+    assert data[0]["party_size"] == 2
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -222,6 +267,7 @@ async def test_cancel_reservation_ownership_and_free_slot():
         "table_id": table_id,
         "reservation_date": "2026-08-25",
         "reservation_time": "19:00:00",
+        "party_size": 2,
     }
     res1 = client.post("/api/v1/reservations", json=payload, headers=headers1)
     res1_data = res1.json()

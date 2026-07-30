@@ -9,6 +9,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Index,
+    Integer,
     Time,
     UUID,
     text,
@@ -70,6 +71,12 @@ class Reservation(Base):
             values_callable=lambda obj: [e.value for e in obj],
         ),
         default=ReservationStatus.CONFIRMED,
+        nullable=False,
+    )
+    party_size: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        server_default="1",
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(

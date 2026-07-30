@@ -93,6 +93,7 @@ async def test_ws_tables_update_broadcast():
             "table_id": table_id,
             "reservation_date": "2026-09-01",
             "reservation_time": "18:00:00",
+            "party_size": 2,
         }
         res_create = client.post("/api/v1/reservations", json=payload, headers=cust_headers)
         assert res_create.status_code == 201

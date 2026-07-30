@@ -3,7 +3,7 @@ import io
 import uuid
 import qrcode
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -130,24 +130,33 @@ async def update_my_restaurant(
             detail="Restaurant not onboarded yet.",
         )
 
+    # 1. Fetch current actual table count in DB for this restaurant
+    count_stmt = select(func.count()).select_from(Table).where(Table.restaurant_id == restaurant.id)
+    count_res = await db.execute(count_stmt)
+    actual_table_count = count_res.scalar_one() or 0
+
+    # 2. Process total_tables from payload if provided
     if payload.total_tables is not None:
         if payload.total_tables < restaurant.total_tables:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Reducing total tables is not allowed.",
             )
-        if payload.total_tables > restaurant.total_tables:
-            current_count = restaurant.total_tables
-            new_tables = [
-                Table(
-                    restaurant_id=restaurant.id,
-                    table_number=i,
-                    capacity=4,
-                )
-                for i in range(current_count + 1, payload.total_tables + 1)
-            ]
-            db.add_all(new_tables)
-            restaurant.total_tables = payload.total_tables
+        restaurant.total_tables = payload.total_tables
+
+    target_tables = restaurant.total_tables
+
+    # 3. Create missing Table rows if target_tables > actual_table_count
+    if target_tables > actual_table_count:
+        new_tables = [
+            Table(
+                restaurant_id=restaurant.id,
+                table_number=i,
+                capacity=4,
+            )
+            for i in range(actual_table_count + 1, target_tables + 1)
+        ]
+        db.add_all(new_tables)
 
     if payload.description is not None:
         restaurant.description = payload.description

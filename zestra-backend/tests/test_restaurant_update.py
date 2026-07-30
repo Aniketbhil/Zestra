@@ -257,3 +257,59 @@ async def test_update_restaurant_me_shrink_tables_rejected():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.mark.asyncio
+async def test_update_restaurant_me_backfills_stuck_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Setup restaurant directly with total_tables=10 but 0 Table rows
+    async with TestingSessionLocal() as session:
+        owner = User(
+            email="stuck_owner@example.com",
+            auth_provider=AuthProvider.LOCAL,
+            role=UserRole.RESTAURANT,
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(owner)
+        await session.commit()
+
+        restaurant = Restaurant(
+            owner_id=owner.id,
+            name="Stuck Restaurant",
+            slug="stuck-restaurant",
+            total_tables=10,
+        )
+        session.add(restaurant)
+        await session.commit()
+        owner_id = owner.id
+        rest_id = restaurant.id
+
+    token = create_access_token({"sub": str(owner_id)})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Call PATCH /me with empty payload or description update
+    patch_res = client.patch(
+        "/api/v1/restaurants/me",
+        json={"description": "Backfilled restaurant"},
+        headers=headers,
+    )
+    assert patch_res.status_code == 200
+    assert patch_res.json()["total_tables"] == 10
+
+    # Verify 10 Table rows were created retroactively numbered 1..10
+    async with TestingSessionLocal() as session:
+        res = await session.execute(
+            Base.metadata.tables["tables"].select().where(
+                Base.metadata.tables["tables"].c.restaurant_id == rest_id
+            )
+        )
+        tables = res.fetchall()
+        assert len(tables) == 10
+        table_numbers = sorted([t.table_number for t in tables])
+        assert table_numbers == list(range(1, 11))
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

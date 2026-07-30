@@ -1,6 +1,6 @@
 from datetime import date, datetime, time
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from app.models.reservation import ReservationStatus
 
 
@@ -9,6 +9,7 @@ class ReservationCreateRequest(BaseModel):
     table_id: UUID
     reservation_date: date
     reservation_time: time
+    party_size: int = Field(..., gt=0)
 
 
 class ReservationStatusUpdateRequest(BaseModel):
@@ -23,6 +24,7 @@ class ReservationResponse(BaseModel):
     reservation_date: date
     reservation_time: time
     status: ReservationStatus
+    party_size: int = 1
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

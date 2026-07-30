@@ -60,6 +60,12 @@ async def create_reservation(
             detail="Table not found for this restaurant.",
         )
 
+    if table.capacity is not None and payload.party_size > table.capacity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"This table can only seat {table.capacity} guests, but {payload.party_size} were requested",
+        )
+
     # 3. Instantiate Reservation
     reservation = Reservation(
         table_id=table.id,
@@ -67,6 +73,7 @@ async def create_reservation(
         customer_id=current_user.id,
         reservation_date=payload.reservation_date,
         reservation_time=payload.reservation_time,
+        party_size=payload.party_size,
         status=ReservationStatus.CONFIRMED,
     )
     db.add(reservation)
