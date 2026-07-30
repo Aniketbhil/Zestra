@@ -19,20 +19,33 @@
   }
 
   .dark {
-    --background: #0F172A;
-    --surface: #1E293B;
-    --surface-secondary: #111827;
-    --primary: #34D399;
-    --primary-hover: #10B981;
+    /* Pure OLED Black Background */
+    --background: #242323;
+    
+    /* Slightly elevated cards to separate from pure black */
+    --surface: #262525;
+    
+    /* Input fields and secondary containers */
+    --surface-secondary: #413e3e;
+    
+    /* Keeping Zestra's vibrant Emerald, but making the hover brighter in dark mode */
+    --primary: #10B981;
+    --primary-hover: #34D399; 
     --primary-active: #059669;
-    --text: #F8FAFC;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
-    --border: #334155;
+    
+    /* High contrast text, but slightly softened from #FFF to prevent eye strain */
+    --text: #EDEDED;
+    --text-secondary: #A3A3A3;
+    --text-muted: #737373;
+    
+    /* Very crisp, barely-there borders */
+    --border: #1F1F1F;
+    
+    /* Status colors slightly tweaked for better visibility against pure black */
     --success: #22C55E;
-    --warning: #F59E0B;
-    --error: #EF4444;
-    --info: #60A5FA;
+    --warning: #FBBF24;
+    --error: #F87171;
+    --info: #3B82F6;
   }
 
   body {
